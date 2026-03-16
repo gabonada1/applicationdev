@@ -23,7 +23,9 @@ export default function Utensils({ navigation }) {
     try {
       const res = await fetch(`${API_URL}/api/utensils`);
       const data = await res.json();
-      if (res.ok && data.ok) setItems(data.items || []);
+      if (res.ok && data.ok) {
+        setItems(data.items || []);
+      }
     } catch {}
   };
 
@@ -37,42 +39,23 @@ export default function Utensils({ navigation }) {
     setRefreshing(false);
   };
 
-  const borrowOne = async (utensilId) => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      if (!token) return Alert.alert("Error", "Please login again.");
-
-      const res = await fetch(`${API_URL}/api/utensils/${utensilId}/borrow`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ qty: 1 })
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.ok) return Alert.alert("Failed", data.message || "Cannot borrow.");
-
-      Alert.alert("Success", "Borrowed successfully!");
-      load();
-    } catch {
-      Alert.alert("Error", "Network/server error.");
-    }
-  };
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return items;
     return items.filter((u) => {
-      const name = (u.name || "").toLowerCase();
-      const status = (u.status || "").toLowerCase();
-      return name.includes(q) || status.includes(q);
+      return (
+        (u.name || "").toLowerCase().includes(q) ||
+        (u.status || "").toLowerCase().includes(q)
+      );
     });
   }, [items, query]);
 
   const renderItem = ({ item }) => {
-    const imgUri = item.hasImage ? `${API_URL}/api/utensils/${item._id}/image` : null;
+    // 🔥 CACHE BUSTER HERE
+    const imgUri = item.hasImage
+      ? `${API_URL}/api/utensils/${item._id}/image?t=${Date.now()}`
+      : null;
+
     const out = item.qty <= 0 || item.status === "Out of Stock";
 
     return (
@@ -81,10 +64,17 @@ export default function Utensils({ navigation }) {
         onPress={() => navigation.navigate("UtensilDetails", { item })}
       >
         {imgUri ? (
-          <Image source={{ uri: imgUri }} style={styles.img} resizeMode="cover" />
+          <Image
+            source={{ uri: imgUri }}
+            style={styles.img}
+            resizeMode="cover"
+            key={imgUri} // 🔥 force rerender
+          />
         ) : (
-          <View style={[styles.img, styles.imgPlaceholder]}>
-            <Text style={{ color: COLORS.muted, fontWeight: "900" }}>No Image</Text>
+          <View style={[styles.img, styles.placeholder]}>
+            <Text style={{ color: COLORS.muted, fontWeight: "900" }}>
+              No Image
+            </Text>
           </View>
         )}
 
@@ -92,27 +82,8 @@ export default function Utensils({ navigation }) {
           <Text style={styles.name}>{item.name}</Text>
           <Text style={styles.meta}>
             Qty: <Text style={styles.bold}>{item.qty}</Text> • Status:{" "}
-            <Text style={[styles.bold, item.status === "Low Stock" && { color: "#b45309" }]}>
-              {item.status}
-            </Text>
+            <Text style={styles.bold}>{item.status}</Text>
           </Text>
-
-          <View style={styles.row}>
-            <Pressable
-              style={styles.viewBtn}
-              onPress={() => navigation.navigate("UtensilDetails", { item })}
-            >
-              <Text style={styles.viewBtnText}>View</Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.btn, out && { opacity: 0.5 }]}
-              onPress={() => borrowOne(item._id)}
-              disabled={out}
-            >
-              <Text style={styles.btnText}>{out ? "Out of Stock" : "Borrow (1)"}</Text>
-            </Pressable>
-          </View>
         </View>
       </Pressable>
     );
@@ -122,26 +93,25 @@ export default function Utensils({ navigation }) {
     <View style={styles.container}>
       <View style={styles.topCard}>
         <Text style={styles.title}>Utensils</Text>
-        <Text style={styles.sub}>Tap a utensil to view details</Text>
+        <Text style={styles.sub}>Tap to view details</Text>
 
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search utensils..."
+          placeholder="Search..."
           placeholderTextColor={COLORS.muted}
           style={styles.search}
         />
-
-        <Text style={styles.count}>{filtered.length} result(s)</Text>
       </View>
 
       <FlatList
         data={filtered}
         keyExtractor={(i) => i._id}
         renderItem={renderItem}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         contentContainerStyle={{ paddingBottom: 24 }}
-        showsVerticalScrollIndicator={false}
       />
     </View>
   );
@@ -165,11 +135,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: COLORS.text
+    padding: 10
   },
-  count: { marginTop: 8, color: COLORS.muted, fontWeight: "800", fontSize: 12 },
 
   card: {
     backgroundColor: COLORS.white,
@@ -179,31 +146,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     overflow: "hidden"
   },
-  img: { width: "100%", height: 170, backgroundColor: "#eee" },
-  imgPlaceholder: { alignItems: "center", justifyContent: "center" },
+  img: { width: "100%", height: 170 },
+  placeholder: { alignItems: "center", justifyContent: "center" },
   name: { fontSize: 16, fontWeight: "900", color: COLORS.text },
   meta: { marginTop: 4, color: COLORS.muted, fontSize: 12 },
-  bold: { fontWeight: "900", color: COLORS.goldDark },
-
-  row: { flexDirection: "row", gap: 10, marginTop: 12 },
-
-  viewBtn: {
-    flex: 1,
-    backgroundColor: "#fff3cf",
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingVertical: 12,
-    borderRadius: 14,
-    alignItems: "center"
-  },
-  viewBtnText: { color: COLORS.goldDark, fontWeight: "900" },
-
-  btn: {
-    flex: 1,
-    backgroundColor: COLORS.gold,
-    paddingVertical: 12,
-    borderRadius: 14,
-    alignItems: "center"
-  },
-  btnText: { color: "#fff", fontWeight: "900" }
+  bold: { fontWeight: "900", color: COLORS.goldDark }
 });

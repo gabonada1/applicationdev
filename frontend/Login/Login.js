@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, Alert } from "react-native";
+import { View, Text, TextInput, Pressable, Alert, Image } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "../config";
 import { commonStyles as s } from "../styles/commonStyles";
+import logo from "../img/logo.png";
 
 export default function Login({ navigation }) {
   const [email, setEmail] = useState("");
@@ -27,18 +28,11 @@ export default function Login({ navigation }) {
       await AsyncStorage.setItem("token", data.token);
       await AsyncStorage.setItem("user", JSON.stringify(data.user));
 
-if (data.user.role === "admin") {
-  navigation.reset({
-    index: 0,
-    routes: [{ name: "AdminTabs" }]
-  });
-} else {
-  navigation.reset({
-    index: 0,
-    routes: [{ name: "UserTabs" }]
-  });
-}
-
+      if (data.user.role === "admin") {
+        navigation.reset({ index: 0, routes: [{ name: "AdminTabs" }] });
+      } else {
+        navigation.reset({ index: 0, routes: [{ name: "UserTabs" }] });
+      }
     } catch {
       Alert.alert("Error", "Cannot connect to server. Check API_URL / network.");
     } finally {
@@ -48,9 +42,11 @@ if (data.user.role === "admin") {
 
   return (
     <View style={s.containerCenter}>
-      <View style={{ marginBottom: 14 }}>
-        <Text style={s.heroTitle}>APPLICATIONDEV</Text>
-        <Text style={s.heroSub}>Gold & White Access Portal</Text>
+      {/* LOGO */}
+      <View style={{ alignItems: "center", marginBottom: 14 }}>
+        <Image source={logo} style={{ width: 170, height: 170 }} resizeMode="contain" />
+        <Text style={s.heroTitle}>HM Kitchen</Text>
+        <Text style={s.heroSub}>Tracking Inventory System</Text>
       </View>
 
       <View style={s.card}>
@@ -60,7 +56,7 @@ if (data.user.role === "admin") {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
-          placeholder="you@gmail.com / you@student.buksu.edu.ph"
+          placeholder="example@gmail.com"
           placeholderTextColor="#6b7280"
           style={s.input}
         />
@@ -87,10 +83,6 @@ if (data.user.role === "admin") {
             <Text style={s.link}>Forgot password?</Text>
           </Pressable>
         </View>
-
-        <Text style={{ marginTop: 12, color: "#6b7280", fontSize: 12, textAlign: "center" }}>
-          Gmail = User • student.buksu.edu.ph = Admin
-        </Text>
       </View>
     </View>
   );

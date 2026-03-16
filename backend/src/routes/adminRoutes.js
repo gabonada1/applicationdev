@@ -4,7 +4,7 @@ const PDFDocument = require("pdfkit");
 const Borrow = require("../models/Borrow");
 const { requireAuth, requireAdmin } = require("../middleware/authMiddleware");
 
-// ✅ JSON logs
+// JSON logs
 router.get("/logs", requireAuth, requireAdmin, async (req, res) => {
   try {
     const records = await Borrow.find()
@@ -35,7 +35,7 @@ router.get("/logs", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// ✅ PDF download
+// PDF download
 router.get("/logs/pdf", requireAuth, requireAdmin, async (req, res) => {
   try {
     const records = await Borrow.find()

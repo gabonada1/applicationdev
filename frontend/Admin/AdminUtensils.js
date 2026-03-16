@@ -22,17 +22,17 @@ export default function AdminUtensils() {
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState("");
 
-  // modal states
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
 
-  // form states (used for both add & edit)
-  const [formId, setFormId] = useState(null); // for edit
+  const [formId, setFormId] = useState(null);
   const [name, setName] = useState("");
   const [qty, setQty] = useState("1");
   const [status, setStatus] = useState("Available");
-  const [pickedImage, setPickedImage] = useState(null); // { uri, ... } from ImagePicker
+  const [pickedImage, setPickedImage] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const [imgVersion, setImgVersion] = useState(Date.now());
 
   const load = async () => {
     try {
@@ -70,6 +70,12 @@ export default function AdminUtensils() {
     setPickedImage(null);
   };
 
+  const closeModals = () => {
+    setShowAdd(false);
+    setShowEdit(false);
+    resetForm();
+  };
+
   const openAdd = () => {
     resetForm();
     setShowAdd(true);
@@ -80,30 +86,41 @@ export default function AdminUtensils() {
     setName(item.name || "");
     setQty(String(item.qty ?? 1));
     setStatus(item.status || "Available");
-    setPickedImage(null); // new image optional; keep old unless user picks new
+
+    if (item.hasImage) {
+      setPickedImage({ uri: `${API_URL}/api/utensils/${item._id}/image?ts=${Date.now()}` });
+    } else {
+      setPickedImage(null);
+    }
+
     setShowEdit(true);
   };
 
-  const closeModals = () => {
-    setShowAdd(false);
-    setShowEdit(false);
-    resetForm();
-  };
-
   const pickImage = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert("Permission required", "Allow access to photos to pick an image.");
+  try {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert("Permission required", "Please allow photo access.");
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, // ✅ THIS works for your version
+      allowsEditing: true,
+      aspect: [1, 1],
       quality: 0.8
     });
 
-    if (!result.canceled) setPickedImage(result.assets[0]);
-  };
+    if (!result.canceled) {
+      setPickedImage(result.assets[0]);
+    }
+
+  } catch (error) {
+    Alert.alert("Image Picker Error", error.message);
+  }
+};
+
 
   const buildFormData = () => {
     const form = new FormData();
@@ -111,9 +128,8 @@ export default function AdminUtensils() {
     form.append("qty", String(Number(qty)));
     form.append("status", status.trim() || "Available");
 
-    if (pickedImage?.uri) {
-      const parts = pickedImage.uri.split(".");
-      const ext = (parts[parts.length - 1] || "jpg").toLowerCase();
+    if (pickedImage?.uri && String(pickedImage.uri).startsWith("file")) {
+      const ext = (pickedImage.uri.split(".").pop() || "jpg").toLowerCase();
       const mime = ext === "jpg" ? "jpeg" : ext;
 
       form.append("image", {
@@ -145,6 +161,7 @@ export default function AdminUtensils() {
       if (!res.ok || !data.ok) return Alert.alert("Failed", data.message || "Could not add utensil.");
 
       Alert.alert("Success", "Utensil added!");
+      setImgVersion(Date.now());
       closeModals();
       load();
     } catch {
@@ -164,7 +181,6 @@ export default function AdminUtensils() {
       const token = await AsyncStorage.getItem("token");
       if (!token) return Alert.alert("Error", "Missing token. Please login again.");
 
-      // ✅ requires backend PUT route (see below)
       const res = await fetch(`${API_URL}/api/utensils/${formId}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
@@ -175,6 +191,7 @@ export default function AdminUtensils() {
       if (!res.ok || !data.ok) return Alert.alert("Failed", data.message || "Could not update utensil.");
 
       Alert.alert("Success", "Utensil updated!");
+      setImgVersion(Date.now());
       closeModals();
       load();
     } catch {
@@ -185,7 +202,7 @@ export default function AdminUtensils() {
   };
 
   const UtensilCard = ({ item }) => {
-    const imgUri = item.hasImage ? `${API_URL}/api/utensils/${item._id}/image` : null;
+    const imgUri = item.hasImage ? `${API_URL}/api/utensils/${item._id}/image?ts=${imgVersion}` : null;
 
     return (
       <View style={styles.listCard}>
@@ -216,10 +233,19 @@ export default function AdminUtensils() {
     );
   };
 
+  // ✅ MODAL CONTENT (fixed touch layering)
   const FormCard = ({ title, onSave, saveText }) => (
-    <View style={styles.modalBackdrop}>
+    <View style={styles.modalRoot}>
+      {/* backdrop BEHIND the card */}
+      <Pressable style={styles.backdrop} onPress={closeModals} />
+
+      {/* card ABOVE backdrop */}
       <View style={styles.modalCard}>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="always"
+          contentContainerStyle={{ paddingBottom: 18 }}
+        >
           <Text style={styles.modalTitle}>{title}</Text>
           <Text style={styles.modalSub}>All fields are inside this card</Text>
 
@@ -257,8 +283,11 @@ export default function AdminUtensils() {
             </View>
           </View>
 
+          {/* ✅ absolutely clickable */}
           <Pressable style={styles.btnOutline} onPress={pickImage}>
-            <Text style={styles.btnOutlineText}>{pickedImage ? "Change Image" : "Pick Image"}</Text>
+            <Text style={styles.btnOutlineText}>
+              {pickedImage?.uri ? "Change Image" : "Pick Image"}
+            </Text>
           </Pressable>
 
           {pickedImage?.uri ? (
@@ -279,7 +308,6 @@ export default function AdminUtensils() {
 
   return (
     <View style={styles.container}>
-      {/* Top card */}
       <View style={styles.topCard}>
         <Text style={styles.title}>Admin Utensils</Text>
         <Text style={styles.sub}>Add + Edit utensils in card modals</Text>
@@ -300,29 +328,33 @@ export default function AdminUtensils() {
         <Text style={styles.count}>{filtered.length} item(s)</Text>
       </View>
 
-      {/* List */}
       <FlatList
         data={filtered}
         keyExtractor={(i) => i._id}
         renderItem={({ item }) => <UtensilCard item={item} />}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyTitle}>No utensils yet</Text>
-            <Text style={styles.emptySub}>Tap “Add” to create your first utensil.</Text>
-          </View>
-        }
       />
 
-      {/* ADD MODAL */}
-      <Modal visible={showAdd} transparent animationType="fade" onRequestClose={closeModals}>
+      <Modal
+        visible={showAdd}
+        transparent
+        animationType="fade"
+        presentationStyle="overFullScreen"
+        onRequestClose={closeModals}
+      >
         <FormCard title="Add Utensil" onSave={createUtensil} saveText="Add Utensil" />
       </Modal>
 
-      {/* EDIT MODAL */}
-      <Modal visible={showEdit} transparent animationType="fade" onRequestClose={closeModals}>
+      <Modal
+        visible={showEdit}
+        transparent
+        animationType="fade"
+        presentationStyle="overFullScreen"
+        onRequestClose={closeModals}
+      >
         <FormCard title="Edit Utensil" onSave={updateUtensil} saveText="Save Changes" />
       </Modal>
     </View>
@@ -361,13 +393,7 @@ const styles = StyleSheet.create({
   },
 
   searchRow: { flexDirection: "row", gap: 10, alignItems: "center" },
-
-  addPill: {
-    backgroundColor: COLORS.gold,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 14
-  },
+  addPill: { backgroundColor: COLORS.gold, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 14 },
   addPillText: { color: "#fff", fontWeight: "900" },
 
   listCard: {
@@ -380,11 +406,9 @@ const styles = StyleSheet.create({
   },
   listImg: { width: "100%", height: 170, backgroundColor: "#eee" },
   noImg: { alignItems: "center", justifyContent: "center" },
-
   listName: { fontSize: 16, fontWeight: "900", color: COLORS.text },
   listMeta: { marginTop: 4, color: COLORS.muted, fontSize: 12 },
   bold: { fontWeight: "900", color: COLORS.goldDark },
-
   cardActions: { flexDirection: "row", gap: 10, marginTop: 12 },
   actionOutline: {
     flex: 1,
@@ -397,22 +421,16 @@ const styles = StyleSheet.create({
   },
   actionOutlineText: { color: COLORS.goldDark, fontWeight: "900" },
 
-  empty: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border
-  },
-  emptyTitle: { fontWeight: "900", color: COLORS.text, fontSize: 16 },
-  emptySub: { marginTop: 4, color: COLORS.muted },
-
-  // MODAL
-  modalBackdrop: {
+  // ✅ modal layering fix
+  modalRoot: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
-    padding: 18,
-    justifyContent: "center"
+    justifyContent: "center",
+    padding: 18
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    zIndex: 0
   },
   modalCard: {
     backgroundColor: COLORS.white,
@@ -420,8 +438,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: COLORS.border,
-    maxHeight: "85%"
+    maxHeight: "85%",
+    zIndex: 10,
+    elevation: 20
   },
+
   modalTitle: { fontSize: 18, fontWeight: "900", color: COLORS.gold },
   modalSub: { marginTop: 4, color: COLORS.muted, marginBottom: 12 },
 
@@ -437,13 +458,7 @@ const styles = StyleSheet.create({
 
   preview: { width: "100%", height: 180, borderRadius: 14, marginTop: 12 },
 
-  btn: {
-    marginTop: 12,
-    backgroundColor: COLORS.gold,
-    paddingVertical: 12,
-    borderRadius: 14,
-    alignItems: "center"
-  },
+  btn: { marginTop: 12, backgroundColor: COLORS.gold, paddingVertical: 12, borderRadius: 14, alignItems: "center" },
   btnText: { color: "#fff", fontWeight: "900", fontSize: 16 },
 
   btnGhost: {

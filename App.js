@@ -2,6 +2,7 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Icon } from "react-native-elements";
 
 import Login from "./frontend/Login/Login";
 import Register from "./frontend/Login/Register";
@@ -28,21 +29,44 @@ const Tab = createBottomTabNavigator();
 function UserTabs() {
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerStyle: { backgroundColor: COLORS.white },
         headerTintColor: COLORS.gold,
         headerTitleStyle: { fontWeight: "900" },
+
         tabBarActiveTintColor: COLORS.gold,
         tabBarInactiveTintColor: "#999",
+
         tabBarStyle: {
           backgroundColor: COLORS.white,
           borderTopWidth: 1,
           borderTopColor: COLORS.border,
-          height: 62,
+          height: 65,
           paddingBottom: 8,
           paddingTop: 8
+        },
+
+        tabBarIcon: ({ color, size }) => {
+          let iconName;
+
+          if (route.name === "Dashboard") {
+            iconName = "home";
+          } else if (route.name === "Utensils") {
+            iconName = "restaurant";
+          } else if (route.name === "Profile") {
+            iconName = "person";
+          }
+
+          return (
+            <Icon
+              name={iconName}
+              type="material"
+              size={24}
+              color={color}
+            />
+          );
         }
-      }}
+      })}
     >
       <Tab.Screen name="Dashboard" component={Dashboard} />
       <Tab.Screen name="Utensils" component={Utensils} />
@@ -51,32 +75,73 @@ function UserTabs() {
   );
 }
 
+/////////////////////////////////////////////////////////
+// ADMIN TABS WITH ICONS
+/////////////////////////////////////////////////////////
 function AdminTabs() {
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerStyle: { backgroundColor: COLORS.white },
         headerTintColor: COLORS.gold,
         headerTitleStyle: { fontWeight: "900" },
+
         tabBarActiveTintColor: COLORS.gold,
         tabBarInactiveTintColor: "#999",
+
         tabBarStyle: {
           backgroundColor: COLORS.white,
           borderTopWidth: 1,
           borderTopColor: COLORS.border,
-          height: 62,
+          height: 65,
           paddingBottom: 8,
           paddingTop: 8
+        },
+
+        tabBarIcon: ({ color, size }) => {
+          let iconName;
+
+          if (route.name === "AdminDashboard") {
+            iconName = "dashboard";
+          } else if (route.name === "AdminUtensils") {
+            iconName = "restaurant-menu";
+          } else if (route.name === "AdminProfile") {
+            iconName = "admin-panel-settings";
+          }
+
+          return (
+            <Icon
+              name={iconName}
+              type="material"
+              size={24}
+              color={color}
+            />
+          );
         }
-      }}
+      })}
     >
-      <Tab.Screen name="AdminDashboard" component={AdminDashboard} options={{ title: "Dashboard" }} />
-      <Tab.Screen name="AdminUtensils" component={AdminUtensils} options={{ title: "Utensils" }} />
-      <Tab.Screen name="AdminProfile" component={AdminProfile} options={{ title: "Profile" }} />
+      <Tab.Screen
+        name="AdminDashboard"
+        component={AdminDashboard}
+        options={{ title: "Dashboard" }}
+      />
+      <Tab.Screen
+        name="AdminUtensils"
+        component={AdminUtensils}
+        options={{ title: "Utensils" }}
+      />
+      <Tab.Screen
+        name="AdminProfile"
+        component={AdminProfile}
+        options={{ title: "Profile" }}
+      />
     </Tab.Navigator>
   );
 }
 
+/////////////////////////////////////////////////////////
+// MAIN STACK
+/////////////////////////////////////////////////////////
 export default function App() {
   return (
     <NavigationContainer>

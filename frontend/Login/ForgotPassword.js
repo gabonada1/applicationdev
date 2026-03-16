@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, Alert } from "react-native";
+import { View, Text, TextInput, Pressable, Alert, Image } from "react-native";
 import { API_URL } from "../config";
 import { commonStyles as s } from "../styles/commonStyles";
+import logo from "../img/logo.png";
 
 export default function ForgotPassword({ navigation }) {
   const [email, setEmail] = useState("");
@@ -60,10 +61,14 @@ export default function ForgotPassword({ navigation }) {
 
   return (
     <View style={s.containerCenter}>
-      <View style={s.card}>
-        <Text style={s.header}>Reset Password</Text>
-        <Text style={s.sub}>Gold & White security</Text>
+      {/* LOGO */}
+      <View style={{ alignItems: "center", marginBottom: 14 }}>
+        <Image source={logo} style={{ width: 140, height: 140 }} resizeMode="contain" />
+        <Text style={s.heroTitle}>Reset Password</Text>
+        <Text style={s.heroSub}>Gold & White security</Text>
+      </View>
 
+      <View style={s.card}>
         <Text style={s.label}>Email</Text>
         <TextInput
           value={email}
@@ -82,10 +87,24 @@ export default function ForgotPassword({ navigation }) {
         ) : (
           <>
             <Text style={[s.label, { marginTop: 12 }]}>Code</Text>
-            <TextInput value={code} onChangeText={setCode} keyboardType="number-pad" placeholder="6-digit code" placeholderTextColor="#6b7280" style={s.input} />
+            <TextInput
+              value={code}
+              onChangeText={setCode}
+              keyboardType="number-pad"
+              placeholder="6-digit code"
+              placeholderTextColor="#6b7280"
+              style={s.input}
+            />
 
             <Text style={[s.label, { marginTop: 12 }]}>New Password</Text>
-            <TextInput value={newPassword} onChangeText={setNewPassword} secureTextEntry placeholder="New password" placeholderTextColor="#6b7280" style={s.input} />
+            <TextInput
+              value={newPassword}
+              onChangeText={setNewPassword}
+              secureTextEntry
+              placeholder="New password"
+              placeholderTextColor="#6b7280"
+              style={s.input}
+            />
 
             <Pressable style={s.btn} onPress={resetPassword} disabled={loading}>
               <Text style={s.btnText}>{loading ? "Updating..." : "Reset password"}</Text>

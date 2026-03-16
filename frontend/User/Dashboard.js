@@ -20,6 +20,9 @@ export default function Dashboard({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [q, setQ] = useState("");
 
+  // bump this to force image refresh everywhere
+  const [imgV, setImgV] = useState(Date.now());
+
   const loadUser = async () => {
     const raw = await AsyncStorage.getItem("user");
     if (raw) {
@@ -32,10 +35,11 @@ export default function Dashboard({ navigation }) {
     try {
       const res = await fetch(`${API_URL}/api/utensils`);
       const data = await res.json();
-      if (res.ok && data.ok) setItems(Array.isArray(data.items) ? data.items : []);
-    } catch {
-      // keep old items
-    }
+      if (res.ok && data.ok) {
+        setItems(Array.isArray(data.items) ? data.items : []);
+        setImgV(Date.now()); // refresh images after loading
+      }
+    } catch {}
   };
 
   const loadAll = async () => {
@@ -46,7 +50,6 @@ export default function Dashboard({ navigation }) {
     loadAll();
   }, []);
 
-  // ✅ refresh when you return to Dashboard
   useFocusEffect(
     useCallback(() => {
       loadItems();
@@ -59,7 +62,6 @@ export default function Dashboard({ navigation }) {
     setRefreshing(false);
   };
 
-  // ✅ Don't filter only "available" — show all items with qty > 0
   const availableNow = useMemo(() => {
     return items.filter((u) => (Number(u.qty) || 0) > 0);
   }, [items]);
@@ -91,13 +93,14 @@ export default function Dashboard({ navigation }) {
   };
 
   const renderItem = ({ item }) => {
-    const imgUri = item.hasImage ? `${API_URL}/api/utensils/${item._id}/image` : null;
+    // cache buster
+    const imgUri = item.hasImage ? `${API_URL}/api/utensils/${item._id}/image?t=${imgV}` : null;
     const pill = statusPill(item.status);
 
     return (
       <Pressable
         style={styles.card}
-        onPress={() => navigation.navigate("UtensilDetails", { utensilId: item._id })}
+        onPress={() => navigation.navigate("UtensilDetails", { item, imgV })} // ✅ pass item
       >
         {imgUri ? (
           <Image source={{ uri: imgUri }} style={styles.img} />
@@ -132,7 +135,6 @@ export default function Dashboard({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* HEADER HERO */}
       <View style={styles.hero}>
         <Text style={styles.heroTitle}>Dashboard</Text>
         <Text style={styles.heroSub}>Hi {name}! Here’s what you can borrow today.</Text>
@@ -150,7 +152,6 @@ export default function Dashboard({ navigation }) {
           </Pressable>
         </View>
 
-        {/* STATS */}
         <View style={styles.statsRow}>
           <View style={styles.stat}>
             <Text style={styles.statNum}>{stats.availableItems}</Text>
@@ -171,13 +172,11 @@ export default function Dashboard({ navigation }) {
         </Pressable>
       </View>
 
-      {/* LIST HEADER */}
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>Available now</Text>
         <Text style={styles.sectionHint}>{filtered.length} item(s)</Text>
       </View>
 
-      {/* LIST */}
       <FlatList
         data={filtered}
         keyExtractor={(i) => i._id}

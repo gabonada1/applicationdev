@@ -17,10 +17,11 @@ export default function UtensilDetails({ route, navigation }) {
   const { item } = route.params;
   const [qty, setQty] = useState(1);
 
-  const availableQty = Number(item.qty || 0);
-  const imgUri = item.hasImage
-    ? `${API_URL}/api/utensils/${item._id}/image`
-    : null;
+const imgUri = item.hasImage
+  ? `${API_URL}/api/utensils/${item._id}/image?t=${Date.now()}`
+  : null;
+
+
 
   const borrow = async () => {
     try {

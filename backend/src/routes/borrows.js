@@ -7,10 +7,6 @@ const Utensil = require("../models/Utensil"); // exists in your src/models
 
 const router = express.Router();
 
-/**
- * GET /api/borrows/me/pdf
- * Generates PDF of current user's borrowed/returned logs.
- */
 router.get("/me/pdf", auth, async (req, res) => {
   try {
     const userId = req.user?.id || req.user?._id || req.user?.userId;

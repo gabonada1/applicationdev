@@ -9,7 +9,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-// ✅ LIST utensils
+// LIST utensils
 router.get("/", async (req, res) => {
   try {
     const items = await Utensil.find()
@@ -32,7 +32,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ STREAM image
+//  STREAM image
 router.get("/:id/image", async (req, res) => {
   try {
     const item = await Utensil.findById(req.params.id).select("image");
@@ -44,7 +44,7 @@ router.get("/:id/image", async (req, res) => {
   }
 });
 
-// ✅ ADMIN create utensil
+// ADMIN create utensil
 router.post("/", requireAuth, requireAdmin, upload.single("image"), async (req, res) => {
   try {
     const { name, qty, status } = req.body;
@@ -73,7 +73,7 @@ router.post("/", requireAuth, requireAdmin, upload.single("image"), async (req, 
   }
 });
 
-// ✅ USER borrow utensil
+// USER borrow utensil
 router.post("/:id/borrow", requireAuth, async (req, res) => {
   try {
     const utensilId = req.params.id;
@@ -108,7 +108,7 @@ router.post("/:id/borrow", requireAuth, async (req, res) => {
   }
 });
 
-// ✅ USER return utensil (by borrow record id)
+// USER return utensil (by borrow record id)
 router.post("/:id/return", requireAuth, async (req, res) => {
   try {
     const borrowId = req.body.borrowId;

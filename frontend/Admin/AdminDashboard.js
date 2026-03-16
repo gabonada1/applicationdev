@@ -160,7 +160,7 @@ export default function AdminDashboard({ navigation }) {
   return (
     <View style={s.container}>
       <View style={s.card}>
-        <Text style={s.header}>Welcome, {name} 👑</Text>
+        <Text style={s.header}>Welcome, {name} </Text>
         <Text style={s.sub}>Admin Panel • Borrow/Return Overview</Text>
 
         <View style={{ marginTop: 14 }}>

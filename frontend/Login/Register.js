@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, Alert } from "react-native";
+import { View, Text, TextInput, Pressable, Alert, Image } from "react-native";
 import { API_URL } from "../config";
 import { commonStyles as s } from "../styles/commonStyles";
+import logo from "../img/logo.png";
 
 export default function Register({ navigation }) {
   const [name, setName] = useState("");
@@ -36,12 +37,22 @@ export default function Register({ navigation }) {
 
   return (
     <View style={s.containerCenter}>
-      <View style={s.card}>
-        <Text style={s.header}>Create Account</Text>
-        <Text style={s.sub}>Gold & White enrollment</Text>
+      {/* LOGO */}
+      <View style={{ alignItems: "center", marginBottom: 14 }}>
+        <Image source={logo} style={{ width: 140, height: 140 }} resizeMode="contain" />
+        <Text style={s.heroTitle}>Create Account</Text>
+        <Text style={s.heroSub}>Gold & White enrollment</Text>
+      </View>
 
+      <View style={s.card}>
         <Text style={s.label}>Full Name</Text>
-        <TextInput value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor="#6b7280" style={s.input} />
+        <TextInput
+          value={name}
+          onChangeText={setName}
+          placeholder="Your name"
+          placeholderTextColor="#6b7280"
+          style={s.input}
+        />
 
         <Text style={[s.label, { marginTop: 12 }]}>Email</Text>
         <TextInput
@@ -55,7 +66,14 @@ export default function Register({ navigation }) {
         />
 
         <Text style={[s.label, { marginTop: 12 }]}>Password</Text>
-        <TextInput value={password} onChangeText={setPassword} secureTextEntry placeholder="Create a password" placeholderTextColor="#6b7280" style={s.input} />
+        <TextInput
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          placeholder="Create a password"
+          placeholderTextColor="#6b7280"
+          style={s.input}
+        />
 
         <Pressable style={s.btn} onPress={onRegister} disabled={loading}>
           <Text style={s.btnText}>{loading ? "Creating..." : "Register"}</Text>
