@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, Alert, Image } from "react-native";
+import { View, Text, TextInput, Pressable, Alert, Image, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "../config";
 import { commonStyles as s } from "../styles/commonStyles";
+import { COLORS } from "../styles/theme";
 import logo from "../img/logo.png";
 
 export default function Login({ navigation }) {
@@ -42,22 +43,29 @@ export default function Login({ navigation }) {
 
   return (
     <View style={s.containerCenter}>
-      {/* LOGO */}
-      <View style={{ alignItems: "center", marginBottom: 14 }}>
-        <Image source={logo} style={{ width: 170, height: 170 }} resizeMode="contain" />
+      <View style={styles.hero}>
+        <View style={s.badge}>
+          <Text style={s.badgeText}>SMART INVENTORY</Text>
+        </View>
+        <View style={s.logoWrap}>
+          <Image source={logo} style={styles.logo} resizeMode="contain" />
+        </View>
         <Text style={s.heroTitle}>HM Kitchen</Text>
-        <Text style={s.heroSub}>Tracking Inventory System</Text>
+        <Text style={s.heroSub}>Track utensils, view stock quickly, and keep borrowing simple.</Text>
       </View>
 
       <View style={s.card}>
-        <Text style={s.label}>Email</Text>
+        <Text style={styles.cardTitle}>Welcome back</Text>
+        <Text style={styles.cardSub}>Sign in to continue to your kitchen inventory dashboard.</Text>
+
+        <Text style={[s.label, { marginTop: 18 }]}>Email</Text>
         <TextInput
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="example@gmail.com"
-          placeholderTextColor="#6b7280"
+          placeholderTextColor={COLORS.muted}
           style={s.input}
         />
 
@@ -66,8 +74,8 @@ export default function Login({ navigation }) {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          placeholder="••••••••"
-          placeholderTextColor="#6b7280"
+          placeholder="Enter your password"
+          placeholderTextColor={COLORS.muted}
           style={s.input}
         />
 
@@ -87,3 +95,24 @@ export default function Login({ navigation }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  hero: {
+    alignItems: "center",
+    marginBottom: 18
+  },
+  logo: {
+    width: 74,
+    height: 74
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: COLORS.text
+  },
+  cardSub: {
+    marginTop: 6,
+    color: COLORS.muted,
+    lineHeight: 20
+  }
+});

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, Alert, Image } from "react-native";
+import { View, Text, TextInput, Pressable, Alert, Image, StyleSheet } from "react-native";
 import { API_URL } from "../config";
 import { commonStyles as s } from "../styles/commonStyles";
+import { COLORS } from "../styles/theme";
 import logo from "../img/logo.png";
 
 export default function ForgotPassword({ navigation }) {
@@ -26,7 +27,7 @@ export default function ForgotPassword({ navigation }) {
       const data = await res.json();
       if (!res.ok || !data.ok) return Alert.alert("Error", data.message || "Try again.");
 
-      Alert.alert("Check", "If the email exists, a code was sent. (Or check backend console if SMTP not set)");
+      Alert.alert("Check", "If the email exists, a code was sent. Or check backend console if SMTP is not set.");
       setStep(2);
     } catch {
       Alert.alert("Error", "Cannot connect to server. Check API_URL / network.");
@@ -61,14 +62,21 @@ export default function ForgotPassword({ navigation }) {
 
   return (
     <View style={s.containerCenter}>
-      {/* LOGO */}
-      <View style={{ alignItems: "center", marginBottom: 14 }}>
-        <Image source={logo} style={{ width: 140, height: 140 }} resizeMode="contain" />
+      <View style={styles.hero}>
+        <View style={s.badge}>
+          <Text style={s.badgeText}>ACCOUNT RECOVERY</Text>
+        </View>
+        <View style={s.logoWrap}>
+          <Image source={logo} style={styles.logo} resizeMode="contain" />
+        </View>
         <Text style={s.heroTitle}>Reset Password</Text>
-        <Text style={s.heroSub}>Gold & White security</Text>
+        <Text style={s.heroSub}>Request a code, then set a fresh password to get back in securely.</Text>
       </View>
 
       <View style={s.card}>
+        <Text style={styles.cardTitle}>Recover access</Text>
+        <Text style={styles.cardSub}>We will guide you through a quick two-step reset flow.</Text>
+
         <Text style={s.label}>Email</Text>
         <TextInput
           value={email}
@@ -76,7 +84,7 @@ export default function ForgotPassword({ navigation }) {
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="you@gmail.com / you@student.buksu.edu.ph"
-          placeholderTextColor="#6b7280"
+          placeholderTextColor={COLORS.muted}
           style={s.input}
         />
 
@@ -92,7 +100,7 @@ export default function ForgotPassword({ navigation }) {
               onChangeText={setCode}
               keyboardType="number-pad"
               placeholder="6-digit code"
-              placeholderTextColor="#6b7280"
+              placeholderTextColor={COLORS.muted}
               style={s.input}
             />
 
@@ -102,7 +110,7 @@ export default function ForgotPassword({ navigation }) {
               onChangeText={setNewPassword}
               secureTextEntry
               placeholder="New password"
-              placeholderTextColor="#6b7280"
+              placeholderTextColor={COLORS.muted}
               style={s.input}
             />
 
@@ -117,9 +125,31 @@ export default function ForgotPassword({ navigation }) {
         )}
 
         <Pressable onPress={() => navigation.goBack()}>
-          <Text style={s.back}>← Back</Text>
+          <Text style={s.back}>Back</Text>
         </Pressable>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  hero: {
+    alignItems: "center",
+    marginBottom: 18
+  },
+  logo: {
+    width: 68,
+    height: 68
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: COLORS.text,
+    marginBottom: 6
+  },
+  cardSub: {
+    color: COLORS.muted,
+    lineHeight: 20,
+    marginBottom: 6
+  }
+});

@@ -7,10 +7,8 @@ import {
   Image,
   StyleSheet,
   RefreshControl,
-  Pressable,
-  Alert
+  Pressable
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "../config";
 import { COLORS } from "../styles/theme";
 
@@ -43,15 +41,11 @@ export default function Utensils({ navigation }) {
     const q = query.trim().toLowerCase();
     if (!q) return items;
     return items.filter((u) => {
-      return (
-        (u.name || "").toLowerCase().includes(q) ||
-        (u.status || "").toLowerCase().includes(q)
-      );
+      return (u.name || "").toLowerCase().includes(q) || (u.status || "").toLowerCase().includes(q);
     });
   }, [items, query]);
 
   const renderItem = ({ item }) => {
-    // 🔥 CACHE BUSTER HERE
     const imgUri = item.hasImage
       ? `${API_URL}/api/utensils/${item._id}/image?t=${Date.now()}`
       : null;
@@ -64,26 +58,26 @@ export default function Utensils({ navigation }) {
         onPress={() => navigation.navigate("UtensilDetails", { item })}
       >
         {imgUri ? (
-          <Image
-            source={{ uri: imgUri }}
-            style={styles.img}
-            resizeMode="cover"
-            key={imgUri} // 🔥 force rerender
-          />
+          <Image source={{ uri: imgUri }} style={styles.img} resizeMode="cover" key={imgUri} />
         ) : (
           <View style={[styles.img, styles.placeholder]}>
-            <Text style={{ color: COLORS.muted, fontWeight: "900" }}>
-              No Image
-            </Text>
+            <Text style={styles.placeholderText}>No Image</Text>
           </View>
         )}
 
-        <View style={{ padding: 12 }}>
-          <Text style={styles.name}>{item.name}</Text>
+        <View style={styles.content}>
+          <View style={styles.rowTop}>
+            <Text style={styles.name}>{item.name}</Text>
+            <View style={[styles.pill, out ? styles.pillOut : styles.pillIn]}>
+              <Text style={[styles.pillText, out ? styles.pillOutText : styles.pillInText]}>
+                {out ? "Out" : item.status || "Available"}
+              </Text>
+            </View>
+          </View>
           <Text style={styles.meta}>
-            Qty: <Text style={styles.bold}>{item.qty}</Text> • Status:{" "}
-            <Text style={styles.bold}>{item.status}</Text>
+            Quantity available: <Text style={styles.bold}>{item.qty}</Text>
           </Text>
+          <Text style={styles.hint}>Tap to view more details</Text>
         </View>
       </Pressable>
     );
@@ -92,8 +86,9 @@ export default function Utensils({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.topCard}>
+        <Text style={styles.eyebrow}>UTENSIL CATALOG</Text>
         <Text style={styles.title}>Utensils</Text>
-        <Text style={styles.sub}>Tap to view details</Text>
+        <Text style={styles.sub}>Browse the full inventory and check current stock fast.</Text>
 
         <TextInput
           value={query}
@@ -108,10 +103,8 @@ export default function Utensils({ navigation }) {
         data={filtered}
         keyExtractor={(i) => i._id}
         renderItem={renderItem}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        contentContainerStyle={{ paddingBottom: 24 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        contentContainerStyle={{ paddingBottom: 120 }}
       />
     </View>
   );
@@ -121,34 +114,66 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg, padding: 18 },
   topCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 28,
+    padding: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginBottom: 12
+    marginBottom: 12,
+    shadowColor: COLORS.shadow,
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4
   },
-  title: { fontSize: 20, fontWeight: "900", color: COLORS.gold },
-  sub: { marginTop: 4, color: COLORS.muted },
+  eyebrow: {
+    alignSelf: "flex-start",
+    backgroundColor: COLORS.softAlt,
+    color: COLORS.goldDark,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    overflow: "hidden",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.8
+  },
+  title: { fontSize: 28, fontWeight: "900", color: COLORS.text, marginTop: 14 },
+  sub: { marginTop: 6, color: COLORS.muted, lineHeight: 20 },
   search: {
     marginTop: 12,
     backgroundColor: COLORS.soft,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 14,
-    padding: 10
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 14
   },
-
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: COLORS.border,
     marginBottom: 12,
-    overflow: "hidden"
+    overflow: "hidden",
+    shadowColor: COLORS.shadow,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3
   },
   img: { width: "100%", height: 170 },
-  placeholder: { alignItems: "center", justifyContent: "center" },
-  name: { fontSize: 16, fontWeight: "900", color: COLORS.text },
-  meta: { marginTop: 4, color: COLORS.muted, fontSize: 12 },
-  bold: { fontWeight: "900", color: COLORS.goldDark }
+  placeholder: { alignItems: "center", justifyContent: "center", backgroundColor: COLORS.soft },
+  placeholderText: { color: COLORS.muted, fontWeight: "900" },
+  content: { padding: 14 },
+  rowTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
+  name: { flex: 1, fontSize: 17, fontWeight: "900", color: COLORS.text },
+  meta: { marginTop: 8, color: COLORS.muted, fontSize: 13 },
+  bold: { fontWeight: "900", color: COLORS.goldDark },
+  hint: { marginTop: 10, color: COLORS.muted, fontSize: 12, fontWeight: "800" },
+  pill: { borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
+  pillText: { fontWeight: "900", fontSize: 11 },
+  pillIn: { backgroundColor: COLORS.soft, borderColor: COLORS.border },
+  pillInText: { color: COLORS.goldDark },
+  pillOut: { backgroundColor: "#fee2e2", borderColor: "#fecaca" },
+  pillOutText: { color: COLORS.danger }
 });

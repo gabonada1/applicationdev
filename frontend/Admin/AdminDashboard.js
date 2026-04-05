@@ -34,25 +34,20 @@ function DonutChart({ borrowed = 0, returned = 0, size = 220, stroke = 24 }) {
   const borrowedPct = total > 0 ? borrowed / total : 0;
   const returnedPct = total > 0 ? returned / total : 0;
 
-  // Start at 0deg, draw arcs in order
   const startAngle = 0;
   const borrowedSweep = clamp(borrowedPct * 360, 0, 360);
   const returnedSweep = clamp(returnedPct * 360, 0, 360);
 
   const borrowedStart = startAngle;
   const borrowedEnd = borrowedStart + borrowedSweep;
-
   const returnedStart = borrowedEnd;
   const returnedEnd = returnedStart + returnedSweep;
-
-  // If total is 0, show only background ring
   const showData = total > 0;
 
   return (
     <View style={{ alignItems: "center" }}>
       <Svg width={size} height={size}>
         <G>
-          {/* Background ring */}
           <Circle cx={cx} cy={cy} r={r} stroke={COLORS.border} strokeWidth={stroke} fill="none" />
 
           {showData && borrowed > 0 ? (
@@ -68,7 +63,7 @@ function DonutChart({ borrowed = 0, returned = 0, size = 220, stroke = 24 }) {
           {showData && returned > 0 ? (
             <Path
               d={describeArc(cx, cy, r, returnedStart, returnedEnd)}
-              stroke={"#166534"} // green for returned
+              stroke={COLORS.success}
               strokeWidth={stroke}
               strokeLinecap="butt"
               fill="none"
@@ -77,7 +72,6 @@ function DonutChart({ borrowed = 0, returned = 0, size = 220, stroke = 24 }) {
         </G>
       </Svg>
 
-      {/* Center text */}
       <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}>
         <Text style={{ fontSize: 26, fontWeight: "900", color: COLORS.text }}>{total}</Text>
         <Text style={{ marginTop: 2, fontWeight: "800", color: COLORS.muted }}>Total Logs</Text>
@@ -160,8 +154,8 @@ export default function AdminDashboard({ navigation }) {
   return (
     <View style={s.container}>
       <View style={s.card}>
-        <Text style={s.header}>Welcome, {name} </Text>
-        <Text style={s.sub}>Admin Panel • Borrow/Return Overview</Text>
+        <Text style={s.header}>Welcome, {name}</Text>
+        <Text style={s.sub}>Admin panel for borrow and return activity overview.</Text>
 
         <View style={{ marginTop: 14 }}>
           {loading ? (
@@ -175,7 +169,7 @@ export default function AdminDashboard({ navigation }) {
 
               <View style={{ marginTop: 12 }}>
                 <LegendRow color={COLORS.gold} label="Borrowed" value={borrowedCount} />
-                <LegendRow color={"#166534"} label="Returned" value={returnedCount} />
+                <LegendRow color={COLORS.success} label="Returned" value={returnedCount} />
                 <LegendRow color={COLORS.border} label="Total" value={total} />
               </View>
 

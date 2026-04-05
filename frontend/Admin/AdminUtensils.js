@@ -106,7 +106,7 @@ export default function AdminUtensils() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images, // ✅ THIS works for your version
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, // THIS works for your version
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8
@@ -217,7 +217,7 @@ export default function AdminUtensils() {
         <View style={{ padding: 12 }}>
           <Text style={styles.listName}>{item.name}</Text>
           <Text style={styles.listMeta}>
-            Qty: <Text style={styles.bold}>{item.qty}</Text> • Status:{" "}
+            Qty: <Text style={styles.bold}>{item.qty}</Text> | Status:{" "}
             <Text style={[styles.bold, item.status === "Low Stock" && { color: "#b45309" }]}>
               {item.status}
             </Text>
@@ -233,7 +233,6 @@ export default function AdminUtensils() {
     );
   };
 
-  // ✅ MODAL CONTENT (fixed touch layering)
   const FormCard = ({ title, onSave, saveText }) => (
     <View style={styles.modalRoot}>
       {/* backdrop BEHIND the card */}
@@ -283,7 +282,6 @@ export default function AdminUtensils() {
             </View>
           </View>
 
-          {/* ✅ absolutely clickable */}
           <Pressable style={styles.btnOutline} onPress={pickImage}>
             <Text style={styles.btnOutlineText}>
               {pickedImage?.uri ? "Change Image" : "Pick Image"}
@@ -421,7 +419,6 @@ const styles = StyleSheet.create({
   },
   actionOutlineText: { color: COLORS.goldDark, fontWeight: "900" },
 
-  // ✅ modal layering fix
   modalRoot: {
     flex: 1,
     justifyContent: "center",

@@ -15,13 +15,12 @@ import { COLORS } from "../styles/theme";
 
 export default function UtensilDetails({ route, navigation }) {
   const { item } = route.params;
-  const [qty, setQty] = useState(1);
+  const availableQty = Math.max(0, Number(item.qty) || 0);
+  const [qty, setQty] = useState(availableQty > 0 ? 1 : 0);
 
-const imgUri = item.hasImage
-  ? `${API_URL}/api/utensils/${item._id}/image?t=${Date.now()}`
-  : null;
-
-
+  const imgUri = item.hasImage
+    ? `${API_URL}/api/utensils/${item._id}/image?t=${Date.now()}`
+    : null;
 
   const borrow = async () => {
     try {
@@ -42,8 +41,9 @@ const imgUri = item.hasImage
       });
 
       const data = await res.json();
-      if (!res.ok || !data.ok)
+      if (!res.ok || !data.ok) {
         return Alert.alert("Failed", data.message || "Cannot borrow.");
+      }
 
       Alert.alert("Success", `Borrowed ${qty} item(s)!`);
       navigation.goBack();
@@ -63,7 +63,14 @@ const imgUri = item.hasImage
           </View>
         )}
 
+        <View style={styles.titleRow}>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{item.status || "Available"}</Text>
+          </View>
+        </View>
+
         <Text style={styles.title}>{item.name}</Text>
+        <Text style={styles.subtitle}>Choose a quantity and confirm your borrow request.</Text>
 
         <Text style={styles.meta}>
           Available: <Text style={styles.bold}>{availableQty}</Text>
@@ -74,46 +81,45 @@ const imgUri = item.hasImage
           <Text
             style={[
               styles.bold,
-              item.status === "Low Stock" && { color: "#b45309" }
+              item.status === "Low Stock" && { color: COLORS.warning }
             ]}
           >
             {item.status}
           </Text>
         </Text>
 
-        {/* Quantity selector */}
         <View style={styles.qtyRow}>
           <Pressable
-            style={styles.stepBtn}
+            style={[styles.stepBtn, availableQty <= 0 && styles.disabled]}
             onPress={() => setQty((prev) => Math.max(1, prev - 1))}
+            disabled={availableQty <= 0}
           >
-            <Text style={styles.stepText}>−</Text>
+            <Text style={styles.stepText}>-</Text>
           </Pressable>
 
           <TextInput
             value={String(qty)}
             onChangeText={(t) => {
               const n = Number(t.replace(/[^0-9]/g, ""));
-              if (!n) return setQty(1);
+              if (!n) return setQty(availableQty > 0 ? 1 : 0);
               setQty(Math.min(n, availableQty));
             }}
             keyboardType="number-pad"
             style={styles.qtyInput}
+            editable={availableQty > 0}
           />
 
           <Pressable
-            style={styles.stepBtn}
+            style={[styles.stepBtn, availableQty <= 0 && styles.disabled]}
             onPress={() => setQty((prev) => Math.min(availableQty, prev + 1))}
+            disabled={availableQty <= 0}
           >
             <Text style={styles.stepText}>+</Text>
           </Pressable>
         </View>
 
         <Pressable
-          style={[
-            styles.borrowBtn,
-            availableQty <= 0 && { opacity: 0.5 }
-          ]}
+          style={[styles.borrowBtn, availableQty <= 0 && styles.disabled]}
           onPress={borrow}
           disabled={availableQty <= 0}
         >
@@ -128,44 +134,66 @@ const imgUri = item.hasImage
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg, padding: 18 },
-
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 28,
+    padding: 18,
     borderWidth: 1,
-    borderColor: COLORS.border
+    borderColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4
   },
-
   image: {
     width: "100%",
     height: 220,
-    borderRadius: 14,
-    backgroundColor: "#eee"
+    borderRadius: 18,
+    backgroundColor: COLORS.soft
   },
   noImage: {
     alignItems: "center",
     justifyContent: "center"
   },
-
-  title: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: COLORS.gold,
-    marginTop: 14
+  titleRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 16
   },
-
-  meta: {
+  badge: {
+    backgroundColor: COLORS.softAlt,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999
+  },
+  badgeText: {
+    color: COLORS.goldDark,
+    fontWeight: "900",
+    fontSize: 11
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: COLORS.text,
+    marginTop: 12
+  },
+  subtitle: {
     marginTop: 6,
+    color: COLORS.muted,
+    lineHeight: 20
+  },
+  meta: {
+    marginTop: 10,
     color: COLORS.text,
     fontSize: 14
   },
-
   bold: {
     fontWeight: "900",
     color: COLORS.goldDark
   },
-
   qtyRow: {
     marginTop: 18,
     flexDirection: "row",
@@ -173,28 +201,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 12
   },
-
   stepBtn: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: "#fff3cf",
+    borderRadius: 14,
+    backgroundColor: COLORS.softAlt,
     borderWidth: 1,
     borderColor: COLORS.border,
     alignItems: "center",
     justifyContent: "center"
   },
-
   stepText: {
     fontSize: 22,
     fontWeight: "900",
     color: COLORS.goldDark
   },
-
   qtyInput: {
     width: 70,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
     textAlign: "center",
@@ -202,18 +227,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: COLORS.soft
   },
-
   borrowBtn: {
     marginTop: 20,
     backgroundColor: COLORS.gold,
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: "center"
+    paddingVertical: 15,
+    borderRadius: 18,
+    alignItems: "center",
+    shadowColor: COLORS.shadow,
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4
   },
-
   borrowText: {
     color: "#fff",
     fontWeight: "900",
     fontSize: 16
+  },
+  disabled: {
+    opacity: 0.5
   }
 });

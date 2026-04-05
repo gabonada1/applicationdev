@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, Alert, Image } from "react-native";
+import { View, Text, TextInput, Pressable, Alert, Image, StyleSheet } from "react-native";
 import { API_URL } from "../config";
 import { commonStyles as s } from "../styles/commonStyles";
+import { COLORS } from "../styles/theme";
 import logo from "../img/logo.png";
 
 export default function Register({ navigation }) {
@@ -37,20 +38,27 @@ export default function Register({ navigation }) {
 
   return (
     <View style={s.containerCenter}>
-      {/* LOGO */}
-      <View style={{ alignItems: "center", marginBottom: 14 }}>
-        <Image source={logo} style={{ width: 140, height: 140 }} resizeMode="contain" />
+      <View style={styles.hero}>
+        <View style={s.badge}>
+          <Text style={s.badgeText}>CREATE ACCOUNT</Text>
+        </View>
+        <View style={s.logoWrap}>
+          <Image source={logo} style={styles.logo} resizeMode="contain" />
+        </View>
         <Text style={s.heroTitle}>Create Account</Text>
-        <Text style={s.heroSub}>Gold & White enrollment</Text>
+        <Text style={s.heroSub}>Join the system and start managing or borrowing utensils with ease.</Text>
       </View>
 
       <View style={s.card}>
+        <Text style={styles.cardTitle}>Set up your profile</Text>
+        <Text style={styles.cardSub}>Use your real details so logs and borrowing history stay accurate.</Text>
+
         <Text style={s.label}>Full Name</Text>
         <TextInput
           value={name}
           onChangeText={setName}
           placeholder="Your name"
-          placeholderTextColor="#6b7280"
+          placeholderTextColor={COLORS.muted}
           style={s.input}
         />
 
@@ -61,7 +69,7 @@ export default function Register({ navigation }) {
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="you@gmail.com / you@student.buksu.edu.ph"
-          placeholderTextColor="#6b7280"
+          placeholderTextColor={COLORS.muted}
           style={s.input}
         />
 
@@ -71,7 +79,7 @@ export default function Register({ navigation }) {
           onChangeText={setPassword}
           secureTextEntry
           placeholder="Create a password"
-          placeholderTextColor="#6b7280"
+          placeholderTextColor={COLORS.muted}
           style={s.input}
         />
 
@@ -80,9 +88,31 @@ export default function Register({ navigation }) {
         </Pressable>
 
         <Pressable onPress={() => navigation.goBack()}>
-          <Text style={s.back}>← Back to login</Text>
+          <Text style={s.back}>Back to login</Text>
         </Pressable>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  hero: {
+    alignItems: "center",
+    marginBottom: 18
+  },
+  logo: {
+    width: 68,
+    height: 68
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: COLORS.text,
+    marginBottom: 6
+  },
+  cardSub: {
+    color: COLORS.muted,
+    lineHeight: 20,
+    marginBottom: 6
+  }
+});

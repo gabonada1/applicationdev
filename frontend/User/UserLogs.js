@@ -61,10 +61,8 @@ export default function UserLogs() {
       const token = await AsyncStorage.getItem("token");
       if (!token) return Alert.alert("Error", "Please login again.");
 
-      // PDF endpoint for USER logs (create in backend)
       const url = `${API_URL}/api/borrows/me/pdf`;
 
-      // check endpoint first (better error)
       const check = await fetch(url, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` }
@@ -79,7 +77,6 @@ export default function UserLogs() {
         return;
       }
 
-      // download to cache
       const fileName = `my-logs-${Date.now()}.pdf`;
       const tmpUri = (FileSystem.cacheDirectory || FileSystem.documentDirectory) + fileName;
 
@@ -87,7 +84,6 @@ export default function UserLogs() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // pick folder (choose Downloads)
       const perms = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
       if (!perms.granted) {
         Alert.alert("Cancelled", "Folder permission not granted.");
@@ -108,7 +104,7 @@ export default function UserLogs() {
         encoding: FileSystem.EncodingType.Base64
       });
 
-      Alert.alert("Downloaded ✅", "Saved to selected folder (choose Downloads).");
+      Alert.alert("Downloaded", "Saved to selected folder (choose Downloads).");
     } catch (e) {
       Alert.alert("Error", `Download failed.\n${String(e?.message || e)}`);
     } finally {
@@ -139,10 +135,10 @@ export default function UserLogs() {
         </Text>
 
         <Text style={styles.small}>
-          Borrowed: {item.borrowedAt ? new Date(item.borrowedAt).toLocaleString() : "—"}
+          Borrowed: {item.borrowedAt ? new Date(item.borrowedAt).toLocaleString() : "-"}
         </Text>
         <Text style={styles.small}>
-          Returned: {item.returnedAt ? new Date(item.returnedAt).toLocaleString() : "—"}
+          Returned: {item.returnedAt ? new Date(item.returnedAt).toLocaleString() : "-"}
         </Text>
       </View>
     );
@@ -151,8 +147,9 @@ export default function UserLogs() {
   return (
     <View style={styles.container}>
       <View style={styles.topCard}>
+        <Text style={styles.eyebrow}>BORROW HISTORY</Text>
         <Text style={styles.header}>My Logs</Text>
-        <Text style={styles.sub}>Your borrowed and returned history</Text>
+        <Text style={styles.sub}>Your borrowed and returned history in one clean view.</Text>
 
         <TextInput
           value={query}
@@ -184,12 +181,12 @@ export default function UserLogs() {
         keyExtractor={(i) => i._id}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        contentContainerStyle={{ paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyTitle}>No logs yet</Text>
-            <Text style={styles.emptySub}>Your borrow/return history will appear here.</Text>
+            <Text style={styles.emptySub}>Your borrow and return history will appear here.</Text>
           </View>
         }
       />
@@ -199,40 +196,51 @@ export default function UserLogs() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg, padding: 18 },
-
   topCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 28,
+    padding: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginBottom: 12
+    marginBottom: 12,
+    shadowColor: COLORS.shadow,
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4
   },
-  header: { fontSize: 20, fontWeight: "900", color: COLORS.gold },
-  sub: { marginTop: 4, color: COLORS.muted },
-
+  eyebrow: {
+    alignSelf: "flex-start",
+    backgroundColor: COLORS.softAlt,
+    color: COLORS.goldDark,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    overflow: "hidden",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.8
+  },
+  header: { fontSize: 28, fontWeight: "900", color: COLORS.text, marginTop: 14 },
+  sub: { marginTop: 6, color: COLORS.muted, lineHeight: 20 },
   input: {
     marginTop: 12,
     backgroundColor: COLORS.soft,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     color: COLORS.text
   },
-
-  btn: { flex: 1, backgroundColor: COLORS.gold, paddingVertical: 12, borderRadius: 14, alignItems: "center" },
+  btn: { flex: 1, backgroundColor: COLORS.gold, paddingVertical: 14, borderRadius: 18, alignItems: "center" },
   btnText: { color: "#fff", fontWeight: "900" },
-
-  btnOutline: { flex: 1, borderWidth: 1, borderColor: COLORS.gold, paddingVertical: 12, borderRadius: 14, alignItems: "center" },
+  btnOutline: { flex: 1, borderWidth: 1, borderColor: COLORS.gold, backgroundColor: COLORS.soft, paddingVertical: 14, borderRadius: 18, alignItems: "center" },
   btnOutlineText: { color: COLORS.goldDark, fontWeight: "900" },
-
   count: { marginTop: 10, color: COLORS.muted, fontWeight: "800", fontSize: 12 },
-
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -243,15 +251,13 @@ const styles = StyleSheet.create({
   meta: { marginTop: 6, color: COLORS.muted, fontSize: 12, fontWeight: "800" },
   bold: { fontWeight: "900", color: COLORS.goldDark },
   small: { marginTop: 4, color: COLORS.muted, fontSize: 12, fontWeight: "800" },
-
   pill: { borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
   pillText: { fontWeight: "900", fontSize: 11 },
   pillBorrowed: { backgroundColor: "#ffedd5", borderColor: "#fed7aa" },
-  pillBorrowedText: { color: "#9a3412" },
+  pillBorrowedText: { color: COLORS.warning },
   pillReturned: { backgroundColor: "#ecfdf5", borderColor: "#bbf7d0" },
-  pillReturnedText: { color: "#166534" },
-
-  empty: { backgroundColor: COLORS.white, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border },
+  pillReturnedText: { color: COLORS.success },
+  empty: { backgroundColor: COLORS.white, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: COLORS.border },
   emptyTitle: { fontWeight: "900", color: COLORS.text, fontSize: 16 },
   emptySub: { marginTop: 4, color: COLORS.muted }
 });

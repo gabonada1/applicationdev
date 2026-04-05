@@ -37,12 +37,12 @@ export default function AdminProfile({ navigation }) {
 
         <View style={styles.infoBox}>
           <Text style={styles.label}>Name</Text>
-          <Text style={styles.value}>{user.name || "—"}</Text>
+          <Text style={styles.value}>{user.name || "-"}</Text>
         </View>
 
         <View style={styles.infoBox}>
           <Text style={styles.label}>Email</Text>
-          <Text style={styles.value}>{user.email || "—"}</Text>
+          <Text style={styles.value}>{user.email || "-"}</Text>
         </View>
 
         <View style={styles.infoBox}>
@@ -50,7 +50,6 @@ export default function AdminProfile({ navigation }) {
           <Text style={styles.value}>{user.role || "admin"}</Text>
         </View>
 
-        {/* ✅ LOGS BUTTON */}
         <Pressable style={styles.btnOutline} onPress={() => navigation.navigate("AdminLogs")}>
           <Text style={styles.btnOutlineText}>View Logs</Text>
         </Pressable>
@@ -90,10 +89,8 @@ const styles = StyleSheet.create({
     borderRadius: 999
   },
   badgeText: { color: COLORS.goldDark, fontWeight: "900", fontSize: 12 },
-
   title: { fontSize: 22, fontWeight: "900", color: COLORS.gold, marginTop: 6 },
   sub: { color: COLORS.muted, marginTop: 4, marginBottom: 14 },
-
   infoBox: {
     backgroundColor: COLORS.soft,
     borderWidth: 1,
@@ -104,7 +101,6 @@ const styles = StyleSheet.create({
   },
   label: { color: COLORS.muted, fontWeight: "800", fontSize: 12 },
   value: { color: COLORS.text, fontWeight: "900", fontSize: 16, marginTop: 3 },
-
   btnOutline: {
     marginTop: 8,
     paddingVertical: 12,
@@ -114,7 +110,6 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   btnOutlineText: { color: COLORS.goldDark, fontWeight: "900" },
-
   btn: { marginTop: 10, backgroundColor: COLORS.gold, paddingVertical: 12, borderRadius: 14, alignItems: "center" },
   btnText: { color: "#fff", fontWeight: "900" }
 });

@@ -62,7 +62,6 @@ export default function AdminLogs() {
       const token = await AsyncStorage.getItem("token");
       if (!token) return Alert.alert("Error", "Please login again.");
 
-      // Check endpoint first for better error messages
       const check = await fetch(`${API_URL}/api/admin/logs/pdf`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` }
@@ -77,7 +76,6 @@ export default function AdminLogs() {
         return;
       }
 
-      // 1) Download to cache
       const fileName = `utensil-logs-${Date.now()}.pdf`;
       const tmpUri = (FileSystem.cacheDirectory || FileSystem.documentDirectory) + fileName;
 
@@ -87,14 +85,12 @@ export default function AdminLogs() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // 2) Ask user to pick folder (choose Downloads)
       const perms = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
       if (!perms.granted) {
         Alert.alert("Cancelled", "Folder permission not granted.");
         return;
       }
 
-      // 3) Copy file to that folder
       const base64 = await FileSystem.readAsStringAsync(dl.uri, {
         encoding: FileSystem.EncodingType.Base64
       });
@@ -109,7 +105,7 @@ export default function AdminLogs() {
         encoding: FileSystem.EncodingType.Base64
       });
 
-      Alert.alert("Downloaded ✅", "Saved to the selected folder (choose Downloads).");
+      Alert.alert("Downloaded", "Saved to the selected folder (choose Downloads).");
     } catch (e) {
       Alert.alert("Error", `Download failed.\n${String(e?.message || e)}`);
     } finally {
@@ -124,7 +120,7 @@ export default function AdminLogs() {
       <View style={styles.card}>
         <Text style={styles.titleLine}>
           <Text style={styles.gold}>{item.utensil?.name || "Unknown"}</Text>{" "}
-          <Text style={styles.muted}>• Qty {item.qty}</Text>
+          <Text style={styles.muted}>| Qty {item.qty}</Text>
         </Text>
 
         <Text style={styles.line}>
@@ -139,10 +135,10 @@ export default function AdminLogs() {
         </Text>
 
         <Text style={styles.small}>
-          Borrowed: {item.borrowedAt ? new Date(item.borrowedAt).toLocaleString() : "—"}
+          Borrowed: {item.borrowedAt ? new Date(item.borrowedAt).toLocaleString() : "-"}
         </Text>
         <Text style={styles.small}>
-          Returned: {item.returnedAt ? new Date(item.returnedAt).toLocaleString() : "—"}
+          Returned: {item.returnedAt ? new Date(item.returnedAt).toLocaleString() : "-"}
         </Text>
       </View>
     );
@@ -193,7 +189,6 @@ export default function AdminLogs() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg, padding: 18 },
-
   topCard: {
     backgroundColor: COLORS.white,
     borderRadius: 18,
@@ -204,7 +199,6 @@ const styles = StyleSheet.create({
   },
   header: { fontSize: 20, fontWeight: "900", color: COLORS.gold },
   sub: { marginTop: 4, color: COLORS.muted },
-
   input: {
     marginTop: 12,
     backgroundColor: COLORS.soft,
@@ -215,15 +209,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     color: COLORS.text
   },
-
   btn: { flex: 1, backgroundColor: COLORS.gold, paddingVertical: 12, borderRadius: 14, alignItems: "center" },
   btnText: { color: "#fff", fontWeight: "900" },
-
   btnOutline: { flex: 1, borderWidth: 1, borderColor: COLORS.gold, paddingVertical: 12, borderRadius: 14, alignItems: "center" },
   btnOutlineText: { color: COLORS.goldDark, fontWeight: "900" },
-
   count: { marginTop: 10, color: COLORS.muted, fontWeight: "800", fontSize: 12 },
-
   card: {
     backgroundColor: COLORS.white,
     borderRadius: 18,
@@ -238,7 +228,6 @@ const styles = StyleSheet.create({
   line: { marginTop: 4, color: COLORS.text },
   bold: { fontWeight: "900" },
   small: { marginTop: 4, color: COLORS.muted, fontSize: 12, fontWeight: "800" },
-
-  borrowed: { color: "#b45309" },
-  returned: { color: "#166534" }
+  borrowed: { color: COLORS.warning },
+  returned: { color: COLORS.success }
 });

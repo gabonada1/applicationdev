@@ -99,10 +99,10 @@ export default function Profile({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.profileCard}>
+        <Text style={styles.eyebrow}>ACCOUNT</Text>
         <Text style={styles.profileTitle}>Profile</Text>
-        <Text style={styles.profileSub}>{user.name} • {user.email}</Text>
+        <Text style={styles.profileSub}>{user.name} | {user.email}</Text>
 
-        {/* ✅ NEW: USER LOGS BUTTON */}
         <Pressable style={styles.btnOutline} onPress={() => navigation.navigate("UserLogs")}>
           <Text style={styles.btnOutlineText}>My Logs</Text>
         </Pressable>
@@ -147,34 +147,54 @@ export default function Profile({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg, padding: 18 },
-
   profileCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 28,
+    padding: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginBottom: 12
+    marginBottom: 12,
+    shadowColor: COLORS.shadow,
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4
   },
-  profileTitle: { fontSize: 20, fontWeight: "900", color: COLORS.gold },
-  profileSub: { marginTop: 4, color: COLORS.muted },
-
+  eyebrow: {
+    alignSelf: "flex-start",
+    backgroundColor: COLORS.softAlt,
+    color: COLORS.goldDark,
+    borderRadius: 999,
+    overflow: "hidden",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.8
+  },
+  profileTitle: { fontSize: 28, fontWeight: "900", color: COLORS.text, marginTop: 14 },
+  profileSub: { marginTop: 6, color: COLORS.muted, lineHeight: 20 },
   btnOutline: {
     marginTop: 12,
-    paddingVertical: 12,
-    borderRadius: 14,
+    paddingVertical: 14,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: COLORS.gold,
+    backgroundColor: COLORS.soft,
     alignItems: "center"
   },
   btnOutlineText: { color: COLORS.goldDark, fontWeight: "900" },
-
-  logoutBtn: { marginTop: 10, backgroundColor: COLORS.gold, paddingVertical: 12, borderRadius: 14, alignItems: "center" },
+  logoutBtn: {
+    marginTop: 10,
+    backgroundColor: COLORS.gold,
+    paddingVertical: 14,
+    borderRadius: 18,
+    alignItems: "center"
+  },
   logoutText: { color: "#fff", fontWeight: "900" },
-
   headerCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
+    borderRadius: 22,
     padding: 16,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -183,10 +203,9 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 16, fontWeight: "900", color: COLORS.text },
   sub: { marginTop: 4, color: COLORS.muted },
-
   item: {
     backgroundColor: COLORS.white,
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -199,9 +218,8 @@ const styles = StyleSheet.create({
   itemMeta: { marginTop: 4, color: COLORS.muted, fontSize: 12 },
   bold: { fontWeight: "900", color: COLORS.goldDark },
   small: { marginTop: 6, color: COLORS.muted, fontSize: 12, fontWeight: "800" },
-
   pillBtn: {
-    backgroundColor: "#fff3cf",
+    backgroundColor: COLORS.softAlt,
     borderWidth: 1,
     borderColor: COLORS.border,
     paddingVertical: 10,
@@ -209,10 +227,9 @@ const styles = StyleSheet.create({
     borderRadius: 12
   },
   pillBtnText: { color: COLORS.goldDark, fontWeight: "900" },
-
   empty: {
     backgroundColor: COLORS.white,
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
