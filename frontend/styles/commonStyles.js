@@ -15,18 +15,18 @@ export const commonStyles = StyleSheet.create({
   },
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 28,
+    borderRadius: 30,
     padding: 22,
     borderWidth: 1,
     borderColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOpacity: 0.12,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
     elevation: 5
   },
   heroTitle: {
-    fontSize: 31,
+    fontSize: 34,
     fontWeight: "900",
     color: COLORS.text,
     letterSpacing: 0.3
@@ -56,10 +56,10 @@ export const commonStyles = StyleSheet.create({
     fontSize: 13
   },
   input: {
-    backgroundColor: COLORS.soft,
+    backgroundColor: "#f2e3a7",
     borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 18,
+    borderColor: "#dbc56a",
+    borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
     color: COLORS.text,
@@ -67,8 +67,8 @@ export const commonStyles = StyleSheet.create({
   },
   btn: {
     marginTop: 16,
-    backgroundColor: COLORS.gold,
-    paddingVertical: 15,
+    backgroundColor: COLORS.dark,
+    paddingVertical: 16,
     borderRadius: 18,
     alignItems: "center",
     shadowColor: COLORS.shadow,
@@ -88,12 +88,12 @@ export const commonStyles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: COLORS.gold,
-    backgroundColor: COLORS.soft,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
     alignItems: "center"
   },
   btnOutlineText: {
-    color: COLORS.goldDark,
+    color: COLORS.text,
     fontWeight: "900"
   },
   rowBetween: {
@@ -102,28 +102,28 @@ export const commonStyles = StyleSheet.create({
     justifyContent: "space-between"
   },
   link: {
-    color: COLORS.goldDark,
+    color: COLORS.text,
     fontWeight: "800",
     fontSize: 13
   },
   back: {
     textAlign: "center",
-    color: COLORS.goldDark,
+    color: COLORS.text,
     fontWeight: "900",
     marginTop: 16
   },
   badge: {
     alignSelf: "center",
-    backgroundColor: COLORS.softAlt,
+    backgroundColor: "#fff5cf",
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "#f1d570",
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
     marginBottom: 10
   },
   badgeText: {
-    color: COLORS.goldDark,
+    color: COLORS.text,
     fontSize: 12,
     fontWeight: "900",
     letterSpacing: 0.6
@@ -131,7 +131,7 @@ export const commonStyles = StyleSheet.create({
   logoWrap: {
     width: 112,
     height: 112,
-    borderRadius: 32,
+    borderRadius: 56,
     backgroundColor: COLORS.white,
     borderWidth: 1,
     borderColor: COLORS.border,

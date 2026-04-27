@@ -6,30 +6,29 @@ import {
   StyleSheet,
   Pressable,
   TextInput,
-  Alert,
   ScrollView
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "../config";
 import { COLORS } from "../styles/theme";
+import { interactivePressable } from "../styles/ui";
+import { toast } from "../components/toast";
 
 export default function UtensilDetails({ route, navigation }) {
   const { item } = route.params;
   const availableQty = Math.max(0, Number(item.qty) || 0);
   const [qty, setQty] = useState(availableQty > 0 ? 1 : 0);
 
-  const imgUri = item.hasImage
-    ? `${API_URL}/api/utensils/${item._id}/image?t=${Date.now()}`
-    : null;
+  const imgUri = item.hasImage ? `${API_URL}/api/utensils/${item._id}/image?t=${Date.now()}` : null;
 
   const borrow = async () => {
     try {
       if (qty > availableQty) {
-        return Alert.alert("Not enough stock", `Only ${availableQty} available.`);
+        return toast.error(`Only ${availableQty} available.`, "Not enough stock");
       }
 
       const token = await AsyncStorage.getItem("token");
-      if (!token) return Alert.alert("Error", "Please login again.");
+      if (!token) return toast.error("Please login again.");
 
       const res = await fetch(`${API_URL}/api/utensils/${item._id}/borrow`, {
         method: "POST",
@@ -42,21 +41,21 @@ export default function UtensilDetails({ route, navigation }) {
 
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        return Alert.alert("Failed", data.message || "Cannot borrow.");
+        return toast.error(data.message || "Cannot borrow.", "Failed");
       }
 
-      Alert.alert("Success", `Borrowed ${qty} item(s)!`);
+      toast.success(`Borrowed ${qty} item(s)!`);
       navigation.goBack();
     } catch {
-      Alert.alert("Error", "Network/server error.");
+      toast.error("Network/server error.");
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 36 }}>
       <View style={styles.card}>
         {imgUri ? (
-          <Image source={{ uri: imgUri }} style={styles.image} />
+          <Image source={{ uri: imgUri }} style={styles.image} resizeMode="contain" />
         ) : (
           <View style={[styles.image, styles.noImage]}>
             <Text style={{ color: COLORS.muted }}>No Image</Text>
@@ -65,32 +64,24 @@ export default function UtensilDetails({ route, navigation }) {
 
         <View style={styles.titleRow}>
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>{item.status || "Available"}</Text>
+            <Text style={styles.badgeText}>{availableQty > 0 ? item.status || "Available" : "Unavailable"}</Text>
           </View>
         </View>
 
         <Text style={styles.title}>{item.name}</Text>
         <Text style={styles.subtitle}>Choose a quantity and confirm your borrow request.</Text>
 
-        <Text style={styles.meta}>
-          Available: <Text style={styles.bold}>{availableQty}</Text>
-        </Text>
-
-        <Text style={styles.meta}>
-          Status:{" "}
-          <Text
-            style={[
-              styles.bold,
-              item.status === "Low Stock" && { color: COLORS.warning }
-            ]}
-          >
-            {item.status}
-          </Text>
-        </Text>
+        <Text style={styles.meta}>Available: <Text style={styles.bold}>{availableQty}</Text></Text>
+        <Text style={styles.meta}>Status: <Text style={styles.bold}>{item.status}</Text></Text>
 
         <View style={styles.qtyRow}>
           <Pressable
-            style={[styles.stepBtn, availableQty <= 0 && styles.disabled]}
+            style={({ pressed, hovered }) => [
+              styles.stepBtn,
+              availableQty <= 0 && styles.disabled,
+              hovered && availableQty > 0 && styles.stepBtnHover,
+              pressed && availableQty > 0 && styles.stepBtnPressed
+            ]}
             onPress={() => setQty((prev) => Math.max(1, prev - 1))}
             disabled={availableQty <= 0}
           >
@@ -110,7 +101,12 @@ export default function UtensilDetails({ route, navigation }) {
           />
 
           <Pressable
-            style={[styles.stepBtn, availableQty <= 0 && styles.disabled]}
+            style={({ pressed, hovered }) => [
+              styles.stepBtn,
+              availableQty <= 0 && styles.disabled,
+              hovered && availableQty > 0 && styles.stepBtnHover,
+              pressed && availableQty > 0 && styles.stepBtnPressed
+            ]}
             onPress={() => setQty((prev) => Math.min(availableQty, prev + 1))}
             disabled={availableQty <= 0}
           >
@@ -119,13 +115,16 @@ export default function UtensilDetails({ route, navigation }) {
         </View>
 
         <Pressable
-          style={[styles.borrowBtn, availableQty <= 0 && styles.disabled]}
+          style={({ pressed, hovered }) => [
+            styles.borrowBtn,
+            availableQty <= 0 && styles.disabled,
+            hovered && availableQty > 0 && styles.borrowBtnHover,
+            pressed && availableQty > 0 && styles.borrowBtnPressed
+          ]}
           onPress={borrow}
           disabled={availableQty <= 0}
         >
-          <Text style={styles.borrowText}>
-            {availableQty <= 0 ? "Out of Stock" : `Borrow (${qty})`}
-          </Text>
+          <Text style={styles.borrowText}>{availableQty <= 0 ? "Out of Stock" : `Borrow (${qty})`}</Text>
         </Pressable>
       </View>
     </ScrollView>
@@ -133,13 +132,13 @@ export default function UtensilDetails({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg, padding: 18 },
+  container: { flex: 1, backgroundColor: "#fffdf8", padding: 18 },
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 28,
+    borderRadius: 30,
     padding: 18,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "#eadfca",
     shadowColor: COLORS.shadow,
     shadowOpacity: 0.12,
     shadowRadius: 20,
@@ -150,7 +149,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 220,
     borderRadius: 18,
-    backgroundColor: COLORS.soft
+    backgroundColor: COLORS.white
   },
   noImage: {
     alignItems: "center",
@@ -162,9 +161,9 @@ const styles = StyleSheet.create({
     marginTop: 16
   },
   badge: {
-    backgroundColor: COLORS.softAlt,
+    backgroundColor: "#fff2c8",
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "#eed283",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999
@@ -192,7 +191,7 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontWeight: "900",
-    color: COLORS.goldDark
+    color: COLORS.text
   },
   qtyRow: {
     marginTop: 18,
@@ -205,16 +204,18 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: COLORS.softAlt,
+    backgroundColor: COLORS.gold,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "#f3ca52",
     alignItems: "center",
     justifyContent: "center"
   },
+  stepBtnHover: { backgroundColor: "#ffcf35" },
+  stepBtnPressed: { backgroundColor: "#f0bc16" },
   stepText: {
     fontSize: 22,
     fontWeight: "900",
-    color: COLORS.goldDark
+    color: COLORS.white
   },
   qtyInput: {
     width: 70,
@@ -225,7 +226,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "900",
     fontSize: 16,
-    backgroundColor: COLORS.soft
+    backgroundColor: COLORS.white
   },
   borrowBtn: {
     marginTop: 20,
@@ -239,8 +240,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 4
   },
+  borrowBtnHover: { backgroundColor: "#ffcf35" },
+  borrowBtnPressed: { backgroundColor: "#f0bc16" },
   borrowText: {
-    color: "#fff",
+    color: COLORS.text,
     fontWeight: "900",
     fontSize: 16
   },

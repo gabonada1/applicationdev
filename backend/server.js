@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 dotenv.config();
 
 const app = express();
+app.set("trust proxy", true);
 
 // middleware
 app.use(cors());
@@ -21,7 +22,7 @@ app.use("/api/utensils", require("./src/routes/utensilRoutes"));
 
 // keep your existing borrow routes
 app.use("/api/borrows", require("./src/routes/borrowRoutes")); // existing endpoints
-app.use("/api/borrows", require("./src/routes/borrows"));      // ✅ PDF endpoint (we'll add)
+app.use("/api/borrows", require("./src/routes/borrows"));      // PDF endpoint (we'll add)
 
 // admin
 app.use("/api/admin", require("./src/routes/adminRoutes"));
@@ -34,19 +35,19 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 
 if (!process.env.MONGO_URI) {
-  console.error("❌ MONGO_URI is missing in .env");
+  console.error("MONGO_URI is missing in .env");
   process.exit(1);
 }
 
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("✅ MongoDB connected");
+    console.log("MongoDB connected");
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`✅ Server running on http://192.168.1.59:${PORT}`);
+      console.log(`Server running on ${process.env.PUBLIC_API_URL || `http://localhost:${PORT}`}`);
     });
   })
   .catch((err) => {
-    console.error("❌ MongoDB connection error:", err.message);
+    console.error("MongoDB connection error:", err.message);
     process.exit(1);
   });

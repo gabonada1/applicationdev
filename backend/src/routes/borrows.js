@@ -142,7 +142,7 @@ router.get("/me/pdf", auth, async (req, res) => {
 
     doc.end();
   } catch (err) {
-    console.error("❌ /api/borrows/me/pdf error:", err?.stack || err);
+    console.error("/api/borrows/me/pdf error:", err?.stack || err);
     // if headers not sent, reply JSON; if headers sent, just end
     if (!res.headersSent) {
       res.status(500).json({ ok: false, message: "Failed to generate PDF" });

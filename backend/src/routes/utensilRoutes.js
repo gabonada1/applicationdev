@@ -9,6 +9,13 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
+function deriveStatus(qty) {
+  const value = Number(qty) || 0;
+  if (value <= 0) return "Out of Stock";
+  if (value <= 10) return "Low Stock";
+  return "Available";
+}
+
 // LIST utensils
 router.get("/", async (req, res) => {
   try {
@@ -47,15 +54,17 @@ router.get("/:id/image", async (req, res) => {
 // ADMIN create utensil
 router.post("/", requireAuth, requireAdmin, upload.single("image"), async (req, res) => {
   try {
-    const { name, qty, status } = req.body;
+    const { name, qty } = req.body;
     if (!name || qty === undefined) {
       return res.status(400).json({ ok: false, message: "Name and qty are required." });
     }
 
+    const parsedQty = Number(qty);
+
     const doc = {
       name: String(name).trim(),
-      qty: Number(qty),
-      status: status || "Available",
+      qty: parsedQty,
+      status: deriveStatus(parsedQty),
       createdBy: req.user.id
     };
 
@@ -151,14 +160,14 @@ router.post("/:id/return", requireAuth, async (req, res) => {
 // ADMIN update utensil (edit) with optional new image
 router.put("/:id", requireAuth, requireAdmin, upload.single("image"), async (req, res) => {
   try {
-    const { name, qty, status } = req.body;
+    const { name, qty } = req.body;
 
     const utensil = await Utensil.findById(req.params.id);
     if (!utensil) return res.status(404).json({ ok: false, message: "Utensil not found." });
 
     if (name !== undefined) utensil.name = String(name).trim();
     if (qty !== undefined) utensil.qty = Number(qty);
-    if (status !== undefined) utensil.status = status;
+    utensil.status = deriveStatus(utensil.qty);
 
     // replace image only if admin picked a new one
     if (req.file) {
@@ -177,6 +186,32 @@ router.put("/:id", requireAuth, requireAdmin, upload.single("image"), async (req
         hasImage: !!utensil.image?.contentType
       }
     });
+  } catch (err) {
+    return res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
+// ADMIN delete utensil only when no active borrow record exists
+router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const utensil = await Utensil.findById(req.params.id);
+    if (!utensil) return res.status(404).json({ ok: false, message: "Utensil not found." });
+
+    const activeBorrow = await Borrow.findOne({
+      utensilId: utensil._id,
+      status: "borrowed"
+    });
+
+    if (activeBorrow) {
+      return res.status(400).json({
+        ok: false,
+        message: "Cannot delete this utensil while it has active borrowed records."
+      });
+    }
+
+    await Utensil.deleteOne({ _id: utensil._id });
+
+    return res.json({ ok: true, message: "Utensil deleted successfully." });
   } catch (err) {
     return res.status(500).json({ ok: false, message: err.message });
   }

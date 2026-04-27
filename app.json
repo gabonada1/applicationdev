@@ -2,6 +2,8 @@
   "expo": {
     "name": "applicationdev",
     "slug": "applicationdev",
+    "owner": "renzo29",
+    "scheme": "applicationdev",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,6 +18,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.applicationdev.mobile",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -24,6 +27,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }

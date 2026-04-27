@@ -1,8 +1,9 @@
 import React from "react";
+import { View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
+import { FontAwesome } from "@expo/vector-icons";
 
 import Login from "./frontend/Login/Login";
 import Register from "./frontend/Login/Register";
@@ -18,8 +19,10 @@ import AdminDashboard from "./frontend/Admin/AdminDashboard";
 import AdminUtensils from "./frontend/Admin/AdminUtensils";
 import AdminProfile from "./frontend/Admin/AdminProfile";
 import AdminLogs from "./frontend/Admin/AdminLogs";
+import AdminUsers from "./frontend/Admin/AdminUsers";
 
 import { COLORS } from "./frontend/styles/theme";
+import { ToastViewport } from "./frontend/components/toast";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -28,54 +31,74 @@ const tabScreenOptions = ({ route }) => ({
   headerStyle: {
     backgroundColor: COLORS.bg
   },
-  headerShadowVisible: false,
+  headerShown: false,
   headerTintColor: COLORS.text,
   headerTitleStyle: { fontWeight: "900" },
-  tabBarActiveTintColor: COLORS.goldDark,
+  tabBarActiveTintColor: COLORS.gold,
   tabBarInactiveTintColor: COLORS.muted,
   tabBarLabelStyle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "800",
-    paddingBottom: 2
+    paddingBottom: 4
   },
   tabBarStyle: {
-    backgroundColor: COLORS.white,
+    backgroundColor: "#fffdf8",
     position: "absolute",
-    left: 14,
-    right: 14,
-    bottom: 14,
+    left: 12,
+    right: 12,
+    bottom: 16,
     borderTopWidth: 0,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 24,
+    borderColor: "#eadfca",
+    borderRadius: 34,
     height: 72,
     paddingBottom: 10,
-    paddingTop: 10,
+    paddingTop: 8,
     shadowColor: COLORS.shadow,
     shadowOpacity: 0.14,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
     elevation: 10
   },
-  tabBarIcon: ({ color }) => {
+  tabBarItemStyle: {
+    borderRadius: 22,
+    marginHorizontal: 4
+  },
+  tabBarIcon: ({ color, focused }) => {
     let iconName;
-    let iconStyle = "solid";
 
     if (route.name === "Dashboard") {
-      iconName = "house";
+      iconName = "home";
     } else if (route.name === "Utensils") {
-      iconName = "utensils";
+      iconName = "cutlery";
     } else if (route.name === "Profile") {
       iconName = "user";
     } else if (route.name === "AdminDashboard") {
-      iconName = "chart-line";
+      iconName = "line-chart";
     } else if (route.name === "AdminUtensils") {
-      iconName = "box-open";
+      iconName = "cutlery";
+    } else if (route.name === "AdminUsers") {
+      iconName = "users";
+    } else if (route.name === "AdminProfile") {
+      iconName = "user";
     } else {
-      iconName = "user-shield";
+      iconName = "user-secret";
     }
 
-    return <FontAwesome6 name={iconName} iconStyle={iconStyle} size={20} color={color} />;
+    return (
+      <View
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 19,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: focused ? "#fff2c7" : "transparent"
+        }}
+      >
+        <FontAwesome name={iconName} size={18} color={color} />
+      </View>
+    );
   }
 });
 
@@ -103,6 +126,11 @@ function AdminTabs() {
         options={{ title: "Utensils" }}
       />
       <Tab.Screen
+        name="AdminUsers"
+        component={AdminUsers}
+        options={{ title: "Users" }}
+      />
+      <Tab.Screen
         name="AdminProfile"
         component={AdminProfile}
         options={{ title: "Profile" }}
@@ -114,27 +142,31 @@ function AdminTabs() {
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Login"
-        screenOptions={{
-          headerStyle: { backgroundColor: COLORS.bg },
-          headerShadowVisible: false,
-          headerTintColor: COLORS.text,
-          headerTitleStyle: { fontWeight: "900" },
-          contentStyle: { backgroundColor: COLORS.bg }
-        }}
-      >
-        <Stack.Screen name="Login" component={Login} options={{ title: "Welcome" }} />
-        <Stack.Screen name="Register" component={Register} options={{ title: "Create Account" }} />
-        <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ title: "Reset Password" }} />
+      <>
+        <Stack.Navigator
+          initialRouteName="Login"
+          screenOptions={{
+            headerStyle: { backgroundColor: COLORS.bg },
+            headerShadowVisible: false,
+            headerTintColor: COLORS.text,
+            headerTitleStyle: { fontWeight: "900" },
+            contentStyle: { backgroundColor: COLORS.bg }
+          }}
+        >
+          <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+          <Stack.Screen name="Register" component={Register} options={{ headerShown: false }} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
 
-        <Stack.Screen name="UserTabs" component={UserTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="UtensilDetails" component={UtensilDetails} options={{ title: "Utensil Details" }} />
-        <Stack.Screen name="UserLogs" component={UserLogs} options={{ title: "My Logs" }} />
+          <Stack.Screen name="UserTabs" component={UserTabs} options={{ headerShown: false }} />
+          <Stack.Screen name="UtensilDetails" component={UtensilDetails} options={{ title: "Utensil Details" }} />
+          <Stack.Screen name="UserLogs" component={UserLogs} options={{ title: "My Logs" }} />
 
-        <Stack.Screen name="AdminTabs" component={AdminTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="AdminLogs" component={AdminLogs} options={{ title: "Logs" }} />
-      </Stack.Navigator>
+          <Stack.Screen name="AdminTabs" component={AdminTabs} options={{ headerShown: false }} />
+          <Stack.Screen name="AdminLogs" component={AdminLogs} options={{ title: "Activity" }} />
+        </Stack.Navigator>
+
+        <ToastViewport />
+      </>
     </NavigationContainer>
   );
 }

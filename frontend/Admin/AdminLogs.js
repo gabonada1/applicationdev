@@ -6,13 +6,14 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  Alert,
   RefreshControl
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
 import { API_URL } from "../config";
 import { COLORS } from "../styles/theme";
+import { interactivePressable } from "../styles/ui";
+import { toast } from "../components/toast";
 
 export default function AdminLogs() {
   const [logs, setLogs] = useState([]);
@@ -60,7 +61,7 @@ export default function AdminLogs() {
       setDownloading(true);
 
       const token = await AsyncStorage.getItem("token");
-      if (!token) return Alert.alert("Error", "Please login again.");
+      if (!token) return toast.error("Please login again.");
 
       const check = await fetch(`${API_URL}/api/admin/logs/pdf`, {
         method: "GET",
@@ -69,9 +70,9 @@ export default function AdminLogs() {
 
       if (!check.ok) {
         const text = await check.text().catch(() => "");
-        Alert.alert(
-          "Download blocked",
-          `Server returned ${check.status}.\n${text ? text : "Check admin token/endpoint."}`
+        toast.error(
+          `Server returned ${check.status}. ${text ? text : "Check admin token/endpoint."}`,
+          "Download blocked"
         );
         return;
       }
@@ -87,7 +88,7 @@ export default function AdminLogs() {
 
       const perms = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
       if (!perms.granted) {
-        Alert.alert("Cancelled", "Folder permission not granted.");
+        toast.info("Folder permission not granted.", "Cancelled");
         return;
       }
 
@@ -105,9 +106,9 @@ export default function AdminLogs() {
         encoding: FileSystem.EncodingType.Base64
       });
 
-      Alert.alert("Downloaded", "Saved to the selected folder (choose Downloads).");
+      toast.success("Saved to the selected folder (choose Downloads).", "Downloaded");
     } catch (e) {
-      Alert.alert("Error", `Download failed.\n${String(e?.message || e)}`);
+      toast.error(`Download failed. ${String(e?.message || e)}`);
     } finally {
       setDownloading(false);
     }
@@ -159,12 +160,24 @@ export default function AdminLogs() {
         />
 
         <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
-          <Pressable style={styles.btnOutline} onPress={onRefresh} disabled={refreshing}>
+          <Pressable
+            style={interactivePressable(styles.btnOutline, {
+              hoverStyle: styles.btnOutlineHover,
+              pressedStyle: styles.btnOutlinePressed
+            })}
+            onPress={onRefresh}
+            disabled={refreshing}
+          >
             <Text style={styles.btnOutlineText}>{refreshing ? "Refreshing..." : "Refresh"}</Text>
           </Pressable>
 
           <Pressable
-            style={[styles.btn, downloading && { opacity: 0.6 }]}
+            style={({ pressed, hovered }) => [
+              styles.btn,
+              downloading && { opacity: 0.6 },
+              hovered && !downloading && styles.btnHover,
+              pressed && !downloading && styles.btnPressed
+            ]}
             onPress={downloadPdfToDownloads}
             disabled={downloading}
           >
@@ -188,38 +201,42 @@ export default function AdminLogs() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg, padding: 18 },
+  container: { flex: 1, backgroundColor: "#fffdf8", padding: 18 },
   topCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
+    backgroundColor: "#fff8e8",
+    borderRadius: 24,
     padding: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "#efe2c2",
     marginBottom: 12
   },
   header: { fontSize: 20, fontWeight: "900", color: COLORS.gold },
   sub: { marginTop: 4, color: COLORS.muted },
   input: {
     marginTop: 12,
-    backgroundColor: COLORS.soft,
+    backgroundColor: "#fffdf8",
     borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 14,
+    borderColor: "#e7dcc6",
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 10,
     color: COLORS.text
   },
-  btn: { flex: 1, backgroundColor: COLORS.gold, paddingVertical: 12, borderRadius: 14, alignItems: "center" },
-  btnText: { color: "#fff", fontWeight: "900" },
-  btnOutline: { flex: 1, borderWidth: 1, borderColor: COLORS.gold, paddingVertical: 12, borderRadius: 14, alignItems: "center" },
+  btn: { flex: 1, backgroundColor: COLORS.gold, paddingVertical: 12, borderRadius: 16, alignItems: "center" },
+  btnHover: { backgroundColor: "#ffcf35" },
+  btnPressed: { backgroundColor: "#f0bc16" },
+  btnText: { color: COLORS.text, fontWeight: "900" },
+  btnOutline: { flex: 1, borderWidth: 1, borderColor: "#eadfca", paddingVertical: 12, borderRadius: 16, alignItems: "center", backgroundColor: COLORS.white },
+  btnOutlineHover: { backgroundColor: "#fff8ea", borderColor: "#e8d49e" },
+  btnOutlinePressed: { backgroundColor: "#fff2d1" },
   btnOutlineText: { color: COLORS.goldDark, fontWeight: "900" },
   count: { marginTop: 10, color: COLORS.muted, fontWeight: "800", fontSize: 12 },
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
+    borderRadius: 22,
     padding: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "#eadfca",
     marginBottom: 10
   },
   titleLine: { fontSize: 15, fontWeight: "900", color: COLORS.text },

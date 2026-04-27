@@ -6,19 +6,22 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  Alert,
   RefreshControl
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
+import { FontAwesome } from "@expo/vector-icons";
 import { API_URL } from "../config";
 import { COLORS } from "../styles/theme";
+import { interactivePressable } from "../styles/ui";
+import { toast } from "../components/toast";
 
 export default function UserLogs() {
   const [records, setRecords] = useState([]);
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [returningId, setReturningId] = useState(null);
 
   const load = async () => {
     try {
@@ -54,12 +57,55 @@ export default function UserLogs() {
     });
   }, [records, query]);
 
+  const activeCount = useMemo(
+    () => records.filter((r) => String(r.status || "").toLowerCase() === "borrowed").length,
+    [records]
+  );
+
+  const returnedCount = useMemo(
+    () => records.filter((r) => String(r.status || "").toLowerCase() === "returned").length,
+    [records]
+  );
+
+  const returnItem = async (item) => {
+    const utensilId = item.utensil?._id;
+    if (!utensilId) return toast.error("This log is missing its utensil reference.", "Cannot return");
+
+    try {
+      setReturningId(item._id);
+
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return toast.error("Please login again.");
+
+      const res = await fetch(`${API_URL}/api/utensils/${utensilId}/return`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ borrowId: item._id })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        return toast.error(data.message || "Cannot return this item.", "Return failed");
+      }
+
+      toast.success("Item returned successfully.");
+      await load();
+    } catch {
+      toast.error("Network/server error.");
+    } finally {
+      setReturningId(null);
+    }
+  };
+
   const downloadMyLogsPdf = async () => {
     try {
       setDownloading(true);
 
       const token = await AsyncStorage.getItem("token");
-      if (!token) return Alert.alert("Error", "Please login again.");
+      if (!token) return toast.error("Please login again.");
 
       const url = `${API_URL}/api/borrows/me/pdf`;
 
@@ -70,9 +116,9 @@ export default function UserLogs() {
 
       if (!check.ok) {
         const text = await check.text().catch(() => "");
-        Alert.alert(
-          "Download blocked",
-          `Server returned ${check.status}.\n${text ? text : "Your backend needs /api/borrows/me/pdf"}`
+        toast.error(
+          `Server returned ${check.status}. ${text ? text : "Your backend needs /api/borrows/me/pdf"}`,
+          "Download blocked"
         );
         return;
       }
@@ -86,7 +132,7 @@ export default function UserLogs() {
 
       const perms = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
       if (!perms.granted) {
-        Alert.alert("Cancelled", "Folder permission not granted.");
+        toast.info("Folder permission not granted.", "Cancelled");
         return;
       }
 
@@ -104,9 +150,9 @@ export default function UserLogs() {
         encoding: FileSystem.EncodingType.Base64
       });
 
-      Alert.alert("Downloaded", "Saved to selected folder (choose Downloads).");
+      toast.success("Saved to selected folder.", "Downloaded");
     } catch (e) {
-      Alert.alert("Error", `Download failed.\n${String(e?.message || e)}`);
+      toast.error(`Download failed. ${String(e?.message || e)}`);
     } finally {
       setDownloading(false);
     }
@@ -115,6 +161,7 @@ export default function UserLogs() {
   const renderItem = ({ item }) => {
     const status = String(item.status || "").toLowerCase();
     const isReturned = status === "returned";
+    const isReturning = returningId === item._id;
 
     return (
       <View style={styles.card}>
@@ -130,16 +177,28 @@ export default function UserLogs() {
           </View>
         </View>
 
-        <Text style={styles.meta}>
-          Qty: <Text style={styles.bold}>{item.qty}</Text>
-        </Text>
-
+        <Text style={styles.meta}>Qty: {item.qty}</Text>
         <Text style={styles.small}>
           Borrowed: {item.borrowedAt ? new Date(item.borrowedAt).toLocaleString() : "-"}
         </Text>
         <Text style={styles.small}>
           Returned: {item.returnedAt ? new Date(item.returnedAt).toLocaleString() : "-"}
         </Text>
+
+        {!isReturned ? (
+          <Pressable
+            style={({ pressed, hovered }) => [
+              styles.returnBtn,
+              isReturning && styles.returnBtnDisabled,
+              hovered && !isReturning && styles.returnBtnHover,
+              pressed && !isReturning && styles.returnBtnPressed
+            ]}
+            onPress={() => returnItem(item)}
+            disabled={isReturning}
+          >
+            <Text style={styles.returnBtnText}>{isReturning ? "Returning..." : "Return Item"}</Text>
+          </Pressable>
+        ) : null}
       </View>
     );
   };
@@ -147,25 +206,39 @@ export default function UserLogs() {
   return (
     <View style={styles.container}>
       <View style={styles.topCard}>
-        <Text style={styles.eyebrow}>BORROW HISTORY</Text>
         <Text style={styles.header}>My Logs</Text>
         <Text style={styles.sub}>Your borrowed and returned history in one clean view.</Text>
 
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search utensil / status..."
-          placeholderTextColor={COLORS.muted}
-          style={styles.input}
-        />
+        <View style={styles.searchRow}>
+          <FontAwesome name="search" size={18} color="#b3ada2" />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search utensil / status..."
+            placeholderTextColor={COLORS.muted}
+            style={styles.input}
+          />
+        </View>
 
-        <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
-          <Pressable style={styles.btnOutline} onPress={onRefresh} disabled={refreshing}>
+        <View style={styles.actions}>
+          <Pressable
+            style={interactivePressable(styles.btnOutline, {
+              hoverStyle: styles.btnOutlineHover,
+              pressedStyle: styles.btnOutlinePressed
+            })}
+            onPress={onRefresh}
+            disabled={refreshing}
+          >
             <Text style={styles.btnOutlineText}>{refreshing ? "Refreshing..." : "Refresh"}</Text>
           </Pressable>
 
           <Pressable
-            style={[styles.btn, downloading && { opacity: 0.6 }]}
+            style={({ pressed, hovered }) => [
+              styles.btn,
+              downloading && { opacity: 0.6 },
+              hovered && !downloading && styles.btnHover,
+              pressed && !downloading && styles.btnPressed
+            ]}
             onPress={downloadMyLogsPdf}
             disabled={downloading}
           >
@@ -173,7 +246,20 @@ export default function UserLogs() {
           </Pressable>
         </View>
 
-        <Text style={styles.count}>{filtered.length} record(s)</Text>
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryValue}>{activeCount}</Text>
+            <Text style={styles.summaryLabel}>Active</Text>
+          </View>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryValue}>{returnedCount}</Text>
+            <Text style={styles.summaryLabel}>Returned</Text>
+          </View>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryValue}>{filtered.length}</Text>
+            <Text style={styles.summaryLabel}>Shown</Text>
+          </View>
+        </View>
       </View>
 
       <FlatList
@@ -195,13 +281,13 @@ export default function UserLogs() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg, padding: 18 },
+  container: { flex: 1, backgroundColor: "#fffdf8", padding: 18 },
   topCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 28,
+    backgroundColor: "#fff8e8",
+    borderRadius: 30,
     padding: 20,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "#efe2c2",
     marginBottom: 12,
     shadowColor: COLORS.shadow,
     shadowOpacity: 0.12,
@@ -209,53 +295,81 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     elevation: 4
   },
-  eyebrow: {
-    alignSelf: "flex-start",
-    backgroundColor: COLORS.softAlt,
-    color: COLORS.goldDark,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    overflow: "hidden",
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 0.8
-  },
-  header: { fontSize: 28, fontWeight: "900", color: COLORS.text, marginTop: 14 },
+  header: { fontSize: 28, fontWeight: "900", color: COLORS.text },
   sub: { marginTop: 6, color: COLORS.muted, lineHeight: 20 },
-  input: {
+  searchRow: {
     marginTop: 12,
-    backgroundColor: COLORS.soft,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#fffdf8",
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "#e7dcc6",
     borderRadius: 18,
     paddingHorizontal: 14,
+    shadowColor: COLORS.shadow,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3
+  },
+  input: {
+    flex: 1,
     paddingVertical: 14,
     color: COLORS.text
   },
+  actions: { flexDirection: "row", gap: 10, marginTop: 10 },
   btn: { flex: 1, backgroundColor: COLORS.gold, paddingVertical: 14, borderRadius: 18, alignItems: "center" },
-  btnText: { color: "#fff", fontWeight: "900" },
-  btnOutline: { flex: 1, borderWidth: 1, borderColor: COLORS.gold, backgroundColor: COLORS.soft, paddingVertical: 14, borderRadius: 18, alignItems: "center" },
-  btnOutlineText: { color: COLORS.goldDark, fontWeight: "900" },
+  btnHover: { backgroundColor: "#ffcf35" },
+  btnPressed: { backgroundColor: "#f0bc16" },
+  btnText: { color: COLORS.text, fontWeight: "900" },
+  btnOutline: { flex: 1, borderWidth: 1, borderColor: "#eadfca", backgroundColor: COLORS.white, paddingVertical: 14, borderRadius: 18, alignItems: "center" },
+  btnOutlineHover: { backgroundColor: "#fff8ea", borderColor: "#e8d49e" },
+  btnOutlinePressed: { backgroundColor: "#fff2d1" },
+  btnOutlineText: { color: COLORS.text, fontWeight: "900" },
   count: { marginTop: 10, color: COLORS.muted, fontWeight: "800", fontSize: 12 },
+  summaryRow: { flexDirection: "row", gap: 8, marginTop: 12 },
+  summaryPill: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: "#eadfca",
+    borderRadius: 16,
+    paddingVertical: 10,
+    alignItems: "center"
+  },
+  summaryValue: { color: COLORS.text, fontSize: 16, fontWeight: "900" },
+  summaryLabel: { marginTop: 3, color: COLORS.muted, fontSize: 11, fontWeight: "800" },
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "#eadfca",
     marginBottom: 10
   },
   rowTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
   name: { flex: 1, fontSize: 16, fontWeight: "900", color: COLORS.text },
-  meta: { marginTop: 6, color: COLORS.muted, fontSize: 12, fontWeight: "800" },
-  bold: { fontWeight: "900", color: COLORS.goldDark },
+  meta: { marginTop: 6, color: COLORS.text, fontSize: 12, fontWeight: "800" },
   small: { marginTop: 4, color: COLORS.muted, fontSize: 12, fontWeight: "800" },
+  returnBtn: {
+    marginTop: 12,
+    backgroundColor: COLORS.gold,
+    borderRadius: 16,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#f3ca52"
+  },
+  returnBtnHover: { backgroundColor: "#ffcf35" },
+  returnBtnPressed: { backgroundColor: "#f0bc16" },
+  returnBtnDisabled: { opacity: 0.6 },
+  returnBtnText: { color: COLORS.text, fontWeight: "900" },
   pill: { borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
   pillText: { fontWeight: "900", fontSize: 11 },
-  pillBorrowed: { backgroundColor: "#ffedd5", borderColor: "#fed7aa" },
+  pillBorrowed: { backgroundColor: "#fff1ee", borderColor: "#ffb7a8" },
   pillBorrowedText: { color: COLORS.warning },
-  pillReturned: { backgroundColor: "#ecfdf5", borderColor: "#bbf7d0" },
+  pillReturned: { backgroundColor: "#ebfae6", borderColor: "#81da8e" },
   pillReturnedText: { color: COLORS.success },
   empty: { backgroundColor: COLORS.white, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: COLORS.border },
   emptyTitle: { fontWeight: "900", color: COLORS.text, fontSize: 16 },

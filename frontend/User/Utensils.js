@@ -9,8 +9,10 @@ import {
   RefreshControl,
   Pressable
 } from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
 import { API_URL } from "../config";
 import { COLORS } from "../styles/theme";
+import { interactivePressable } from "../styles/ui";
 
 export default function Utensils({ navigation }) {
   const [items, setItems] = useState([]);
@@ -46,19 +48,19 @@ export default function Utensils({ navigation }) {
   }, [items, query]);
 
   const renderItem = ({ item }) => {
-    const imgUri = item.hasImage
-      ? `${API_URL}/api/utensils/${item._id}/image?t=${Date.now()}`
-      : null;
-
+    const imgUri = item.hasImage ? `${API_URL}/api/utensils/${item._id}/image?t=${Date.now()}` : null;
     const out = item.qty <= 0 || item.status === "Out of Stock";
 
     return (
       <Pressable
-        style={styles.card}
+        style={interactivePressable(styles.card, {
+          hoverStyle: styles.cardHover,
+          pressedStyle: styles.cardPressed
+        })}
         onPress={() => navigation.navigate("UtensilDetails", { item })}
       >
         {imgUri ? (
-          <Image source={{ uri: imgUri }} style={styles.img} resizeMode="cover" key={imgUri} />
+          <Image source={{ uri: imgUri }} style={styles.img} resizeMode="contain" key={imgUri} />
         ) : (
           <View style={[styles.img, styles.placeholder]}>
             <Text style={styles.placeholderText}>No Image</Text>
@@ -70,14 +72,27 @@ export default function Utensils({ navigation }) {
             <Text style={styles.name}>{item.name}</Text>
             <View style={[styles.pill, out ? styles.pillOut : styles.pillIn]}>
               <Text style={[styles.pillText, out ? styles.pillOutText : styles.pillInText]}>
-                {out ? "Out" : item.status || "Available"}
+                {out ? "Unavailable" : item.status || "Available"}
               </Text>
             </View>
           </View>
+
           <Text style={styles.meta}>
-            Quantity available: <Text style={styles.bold}>{item.qty}</Text>
+            Qty: <Text style={styles.bold}>{item.qty}</Text>
           </Text>
-          <Text style={styles.hint}>Tap to view more details</Text>
+
+          <Pressable
+            style={({ pressed, hovered }) => [
+              styles.borrowBtn,
+              out && styles.borrowDisabled,
+              hovered && !out && styles.borrowBtnHover,
+              pressed && !out && styles.borrowBtnPressed
+            ]}
+            onPress={() => navigation.navigate("UtensilDetails", { item })}
+            disabled={out}
+          >
+            <Text style={styles.borrowText}>{out ? "Unavailable" : "Borrow"}</Text>
+          </Pressable>
         </View>
       </Pressable>
     );
@@ -86,17 +101,18 @@ export default function Utensils({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.topCard}>
-        <Text style={styles.eyebrow}>UTENSIL CATALOG</Text>
         <Text style={styles.title}>Utensils</Text>
-        <Text style={styles.sub}>Browse the full inventory and check current stock fast.</Text>
 
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search..."
-          placeholderTextColor={COLORS.muted}
-          style={styles.search}
-        />
+        <View style={styles.searchRow}>
+          <FontAwesome name="search" size={18} color="#b3ada2" />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search....."
+            placeholderTextColor={COLORS.muted}
+            style={styles.search}
+          />
+        </View>
       </View>
 
       <FlatList
@@ -104,76 +120,157 @@ export default function Utensils({ navigation }) {
         keyExtractor={(i) => i._id}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 120, paddingTop: 4 }}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg, padding: 18 },
+  container: { flex: 1, backgroundColor: "#fffdf8" },
   topCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 28,
-    padding: 20,
+    backgroundColor: "#fff8e8",
+    borderBottomLeftRadius: 34,
+    borderBottomRightRadius: 34,
+    paddingHorizontal: 18,
+    paddingTop: 22,
+    paddingBottom: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 12,
+    borderColor: "#efe2c2",
+    marginBottom: 8,
     shadowColor: COLORS.shadow,
     shadowOpacity: 0.12,
-    shadowRadius: 20,
+    shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
     elevation: 4
   },
-  eyebrow: {
-    alignSelf: "flex-start",
-    backgroundColor: COLORS.softAlt,
-    color: COLORS.goldDark,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    overflow: "hidden",
-    fontSize: 11,
+  title: {
+    fontSize: 18,
     fontWeight: "900",
-    letterSpacing: 0.8
+    color: COLORS.text,
+    textAlign: "center",
+    marginBottom: 14
   },
-  title: { fontSize: 28, fontWeight: "900", color: COLORS.text, marginTop: 14 },
-  sub: { marginTop: 6, color: COLORS.muted, lineHeight: 20 },
-  search: {
-    marginTop: 12,
-    backgroundColor: COLORS.soft,
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#fffdf8",
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "#e7dcc6",
     borderRadius: 18,
     paddingHorizontal: 14,
-    paddingVertical: 14
-  },
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 12,
-    overflow: "hidden",
+    marginHorizontal: 4,
     shadowColor: COLORS.shadow,
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 3
   },
-  img: { width: "100%", height: 170 },
-  placeholder: { alignItems: "center", justifyContent: "center", backgroundColor: COLORS.soft },
-  placeholderText: { color: COLORS.muted, fontWeight: "900" },
-  content: { padding: 14 },
-  rowTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
-  name: { flex: 1, fontSize: 17, fontWeight: "900", color: COLORS.text },
-  meta: { marginTop: 8, color: COLORS.muted, fontSize: 13 },
-  bold: { fontWeight: "900", color: COLORS.goldDark },
-  hint: { marginTop: 10, color: COLORS.muted, fontSize: 12, fontWeight: "800" },
-  pill: { borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
-  pillText: { fontWeight: "900", fontSize: 11 },
-  pillIn: { backgroundColor: COLORS.soft, borderColor: COLORS.border },
-  pillInText: { color: COLORS.goldDark },
-  pillOut: { backgroundColor: "#fee2e2", borderColor: "#fecaca" },
-  pillOutText: { color: COLORS.danger }
+  search: {
+    flex: 1,
+    paddingVertical: 12,
+    color: COLORS.text
+  },
+  card: {
+    marginHorizontal: 16,
+    marginBottom: 18,
+    backgroundColor: COLORS.white,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: "#eadfca",
+    overflow: "hidden",
+    shadowColor: COLORS.shadow,
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4
+  },
+  cardHover: {
+    backgroundColor: "#fffaf0",
+    borderColor: "#ebd89e"
+  },
+  cardPressed: {
+    backgroundColor: "#fff4dc"
+  },
+  img: {
+    width: "100%",
+    height: 170,
+    backgroundColor: COLORS.white
+  },
+  placeholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.soft
+  },
+  placeholderText: {
+    color: COLORS.muted,
+    fontWeight: "900"
+  },
+  content: {
+    padding: 14
+  },
+  rowTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10
+  },
+  name: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: "900",
+    color: COLORS.text
+  },
+  meta: {
+    marginTop: 8,
+    color: COLORS.text,
+    fontSize: 13
+  },
+  bold: {
+    fontWeight: "900",
+    color: COLORS.text
+  },
+  pill: {
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999
+  },
+  pillText: {
+    fontWeight: "900",
+    fontSize: 11
+  },
+  pillIn: {
+    backgroundColor: "#ebfae6",
+    borderColor: COLORS.success
+  },
+  pillInText: {
+    color: COLORS.success
+  },
+  pillOut: {
+    backgroundColor: "#fff1ee",
+    borderColor: COLORS.warning
+  },
+  pillOutText: {
+    color: COLORS.warning
+  },
+  borrowBtn: {
+    marginTop: 12,
+    backgroundColor: COLORS.gold,
+    borderRadius: 16,
+    paddingVertical: 12,
+    alignItems: "center"
+  },
+  borrowBtnHover: { backgroundColor: "#ffcf35" },
+  borrowBtnPressed: { backgroundColor: "#f0bc16" },
+  borrowText: {
+    color: COLORS.text,
+    fontWeight: "900",
+    fontSize: 14
+  },
+  borrowDisabled: {
+    opacity: 0.55
+  }
 });
